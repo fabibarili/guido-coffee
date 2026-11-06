@@ -540,11 +540,11 @@ function sfx(type){
 
 /* ================= ESTADO ================= */
 const input={left:false,right:false,jump:false,jumpPressed:false};
-let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,winPhase=0,cheerT=-1;
+let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,checkK=0,winPhase=0,cheerT=-1;
 const PW=22,PH=38;
 function newPlayer(tx){return{x:tx*T,y:13*T-PH,w:PW,h:PH,vx:0,vy:0,face:1,onGround:false,coyote:0,buf:0,runT:0,still:0,dead:false,inv:0}}
 function newGame(){const fromTitle=state==='title';buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);particles=[];pops=[];lost=[];bumps.clear();
-  flagY=0;winPhase=0;cheerT=-1;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
+  flagY=0;checkK=0;winPhase=0;cheerT=-1;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
 function respawn(){P=newPlayer(checkpoint);P.inv=90;state='play';
   enemies.forEach(e=>{if(!e.dead&&Math.abs(e.x-P.x)<6*T)e.x=P.x+9*T})}
 function dust(x,y,n=5){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*1.6,vy:-Math.random()*1.2,life:18+Math.random()*10,col:'#ffffff',s:2})}
@@ -617,6 +617,7 @@ function updatePlayer(){
   if(P.y+P.h>COFFEE_Y+6)coffeeDie();
   for(const b of beans)if(!b.got&&P.x<b.x+20&&P.x+P.w>b.x&&P.y<b.y+20&&P.y+P.h>b.y){b.got=true;getBean();sparkle(b.x+10,b.y+10)}
   if(checkpoint<CHECK_X&&P.x>CHECK_X*T){checkpoint=CHECK_X;sfx('up')}
+  if(checkpoint>=CHECK_X&&checkK<1)checkK=Math.min(1,checkK+0.04); // bandeira do checkpoint sobe
   for(const e of enemies){
     if(e.dead||!e.active)continue;
     if(P.x+2<e.x+e.w&&P.x+P.w-2>e.x&&P.y+6<e.y+e.h&&P.y+P.h>e.y){
@@ -853,8 +854,9 @@ function drawTiles(cx){
 function drawProps(cx){
   const kx=CHECK_X*T+11-cx;
   if(kx>-30&&kx<VW+30){const top=13*T-72;ctx.fillStyle='#1d1d1b';ctx.fillRect(kx-1,top,5,72);ctx.fillStyle='#e8e8e8';ctx.fillRect(kx,top,3,72);
-    const on=checkpoint>=CHECK_X;ctx.fillStyle='#1d1d1b';ctx.fillRect(kx+3,top,22,16);ctx.fillStyle=on?'#4f86c6':'#9aa3b0';ctx.fillRect(kx+3,top+1,21,14);
-    if(on)ptext(ctx,'G',kx+11,top+3,'#fff',2)}
+    const on=checkpoint>=CHECK_X,ft=top+Math.round((72-18)*(1-checkK)); // começa embaixo e sobe quando o Guido passa
+    ctx.fillStyle='#1d1d1b';ctx.fillRect(kx+3,ft,22,16);ctx.fillStyle=on?'#4f86c6':'#9aa3b0';ctx.fillRect(kx+3,ft+1,21,14);
+    if(on)ptext(ctx,'G',kx+11,ft+3,'#fff',2)}
   const px=POLE_X-cx;
   if(px>-50&&px<VW+50){
     ctx.fillStyle='#1d1d1b';ctx.fillRect(px-1,3*T-2,5,10*T+2);ctx.fillStyle='#f2f2f2';ctx.fillRect(px,3*T-2,3,10*T+2);
@@ -1044,7 +1046,7 @@ function show(html,act=newGame){titleBox=null;ov.innerHTML=html;ov.classList.rem
   const b=ov.querySelector('.play');if(b)b.addEventListener('click',e=>{e.stopPropagation();unlockAudio();act()})}
 function goTitle(){ // volta para a tela inicial
   buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(2);P.still=30;particles=[];pops=[];lost=[];bumps.clear();
-  flagY=0;winPhase=0;cheerT=-1;cam=0;state='title';resetInput();endTut();showTitle()}
+  flagY=0;checkK=0;winPhase=0;cheerT=-1;cam=0;state='title';resetInput();endTut();showTitle()}
 function showTitle(){
   show(`<div class="sign" role="img" aria-label="Guido Café &amp; Co."></div><canvas id="prev" width="${CW}" height="${CH}"></canvas><button class="play low">JOGAR ▶</button>`);
   ov.classList.add('menu');
