@@ -45,11 +45,29 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   border:3px solid rgba(255,255,255,.9);background:rgba(255,255,255,.25);box-shadow:0 0 0 2px rgba(0,0,0,.25);pointer-events:none}
 .ripple{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;
   pointer-events:none;animation:rip .45s ease-out forwards}
+/* tutorial de movimento (aparece depois da tela inicial) */
+#tut{position:absolute;left:50%;top:15%;transform:translateX(-50%);width:min(88%,330px);z-index:3;pointer-events:none;
+  background:rgba(15,25,40,.88);border:3px solid #fff;box-shadow:4px 4px 0 #000;padding:12px 12px 14px;text-align:center;
+  display:none;flex-direction:column;align-items:center;gap:9px;transition:opacity .25s}
+#tut.on{display:flex}#tut.fade{opacity:0}
+#tut .st{font-size:7px;color:#9fc3ee;letter-spacing:1px}
+#tut .tt{font-size:13px;color:#ffe08a;text-shadow:2px 2px 0 #000}
+#tut .tx{font-size:8px;line-height:1.9;color:#fff}
+#tut .ok{font-size:12px;color:#8ff08a;text-shadow:2px 2px 0 #000;animation:okp .35s ease-out}
+@keyframes okp{from{transform:scale(.3)}to{transform:scale(1)}}
+#tut .demo{position:relative;width:120px;height:50px;border:2px dashed rgba(255,255,255,.35)}
+#tut .demo i{position:absolute;left:50%;top:60%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  border:2px solid #fff;background:rgba(255,255,255,.35)}
+#tut .walk i{animation:dwalk 2.4s ease-in-out infinite}
+@keyframes dwalk{0%,100%{left:20%}50%{left:80%}}
+#tut .jump i{animation:djump 1.4s ease-in-out infinite}
+@keyframes djump{0%,25%{top:80%}55%,100%{top:15%;opacity:1}}
+@media (prefers-reduced-motion:reduce){#tut .demo i{animation:none}}
 @keyframes rip{from{transform:scale(.4);opacity:.9}to{transform:scale(2.2);opacity:0}}
 </style>
 </head>
 <body>
-<div id="wrap"><canvas id="c"></canvas><div id="tdot"></div></div>
+<div id="wrap"><canvas id="c"></canvas><div id="tdot"></div><div id="tut" aria-live="polite"></div></div>
 <div id="overlay"></div>
 <script>
 (()=>{
@@ -508,8 +526,8 @@ const input={left:false,right:false,jump:false,jumpPressed:false};
 let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,winPhase=0;
 const PW=22,PH=38;
 function newPlayer(tx){return{x:tx*T,y:13*T-PH,w:PW,h:PH,vx:0,vy:0,face:1,onGround:false,coyote:0,buf:0,runT:0,still:0,dead:false,inv:0}}
-function newGame(){buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);particles=[];pops=[];lost=[];bumps.clear();
-  flagY=0;winPhase=0;cam=0;state='play';resetInput();hideOverlay();sfx('woof')}
+function newGame(){const fromTitle=state==='title';buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);particles=[];pops=[];lost=[];bumps.clear();
+  flagY=0;winPhase=0;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
 function respawn(){P=newPlayer(checkpoint);P.inv=90;state='play';
   enemies.forEach(e=>{if(!e.dead&&Math.abs(e.x-P.x)<6*T)e.x=P.x+9*T})}
 function dust(x,y,n=5){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*1.6,vy:-Math.random()*1.2,life:18+Math.random()*10,col:'#ffffff',s:2})}
@@ -550,7 +568,8 @@ function update(){
   if(state==='title'){P.still++;return}
   if(state==='play')updatePlayer();
   else if(state==='win')updateWin();
-  if(state==='play'||state==='win'){updateEnemies();updateLost()}
+  if(state==='play'||state==='win'){if(!tut)updateEnemies();updateLost()}
+  if(tut&&state==='play')tutTick();
   const target=Math.max(0,Math.min(LW*T-VW,P.x+P.w/2-VW*0.36));
   cam+=(target-cam)*0.18;
 }
@@ -571,7 +590,7 @@ function updatePlayer(){
   }else{const f=P.onGround?0.24:0.06;P.vx=Math.abs(P.vx)<=f?0:P.vx-Math.sign(P.vx)*f}
   if(input.jumpPressed){P.buf=8;input.jumpPressed=false}
   P.coyote=P.onGround?6:P.coyote-1;
-  if(P.buf>0&&P.coyote>0){P.vy=-9.6;P.coyote=0;P.buf=0;P.onGround=false;sfx('jump');dust(P.x+P.w/2,P.y+P.h,3)}
+  if(P.buf>0&&P.coyote>0){P.vy=-9.6;P.coyote=0;P.buf=0;P.onGround=false;sfx('jump');dust(P.x+P.w/2,P.y+P.h,3);if(tut)tut.jumps++}
   P.buf--;
   P.vy=Math.min(P.vy+((P.vy<0&&input.jump)?0.42:0.95),9);
   moveX(P);
@@ -970,6 +989,37 @@ function showWin(){
   show(`<div class="title" style="font-size:20px">AU AU!</div><div class="big">VOCÊ CHEGOU!</div>
   <div class="sub">${beanCount} grãos · ${pad2(score,6)} pontos<br>recorde: ${pad2(best,6)}</div><button class="play">↻ JOGAR DE NOVO</button>`)}
 
+/* ================= TUTORIAL =================
+   Logo depois da tela inicial: ensina a andar (pressionar e arrastar para os lados) e a pular (arrastar para cima).
+   Os inimigos ficam parados até o tutorial acabar. */
+const tutEl=document.getElementById('tut');let tut=null;
+const TUT_STEPS=[
+  {id:'walk',t:'ANDAR',tx:'Pressione a tela e arraste para os lados: o Guido corre atrás do seu dedo.',
+   done:t=>t.dist>4*T},
+  {id:'jump',t:'PULAR',tx:'Arraste o dedo para cima para pular.',
+   done:t=>t.jumps>t.j0},
+];
+function startTut(){tut={i:-1,dist:0,jumps:0,j0:0,okT:0};nextTut()}
+function endTut(){tut=null;tutEl.className='';tutEl.innerHTML=''}
+function nextTut(){
+  tut.i++;const s=TUT_STEPS[tut.i],n=TUT_STEPS.length;
+  tut.j0=tut.jumps;tut.okT=0;
+  if(!s){tutEl.innerHTML='<div class="tt">PRONTO!</div><div class="tx">Pegue os grãos de café e chegue à cafeteria!</div>';
+    tutEl.className='on';tut.endT=150;return}
+  tutEl.innerHTML=`<div class="st">TUTORIAL ${tut.i+1}/${n}</div><div class="tt">${s.t}</div>`+
+    `<div class="demo ${s.id}"><i></i></div><div class="tx">${s.tx}</div>`;
+  tutEl.className='on';
+}
+function tutTick(){
+  if(tut.endT){if(--tut.endT===20)tutEl.classList.add('fade');if(tut.endT<=0)endTut();return}
+  if(tut.okT){if(--tut.okT<=0)nextTut();return}
+  if(P.dead)return;
+  tut.dist+=Math.abs(P.vx);
+  const s=TUT_STEPS[tut.i];
+  if(s&&s.done(tut)){tut.okT=50;sfx('bean');tutEl.querySelector('.tx').outerHTML='<div class="ok">MUITO BEM!</div>';
+    const d=tutEl.querySelector('.demo');if(d)d.remove()}
+}
+
 /* ================= CONTROLES (estilo Flappy Bird) =================
    Com o dedo na tela, o Guido corre na direção do dedo e para embaixo dele.
    Arrastar o dedo para cima = pula (manter lá em cima = pulo mais alto).
@@ -1044,7 +1094,7 @@ function loop(ts){
 }
 resize();buildLevel();P=newPlayer(2);P.still=30;checkpoint=2;showTitle();
 requestAnimationFrame(loop);
-window.__guido={get P(){return P},get state(){return state},get beans(){return beanCount},get lost(){return lost},get enemies(){return enemies},input,DOG,DOG_SIP,makeSign,step:n=>{for(let i=0;i<n;i++)update();render()}};
+window.__guido={get P(){return P},get state(){return state},get beans(){return beanCount},get lost(){return lost},get enemies(){return enemies},get tut(){return tut},input,DOG,DOG_SIP,makeSign,step:n=>{for(let i=0;i<n;i++)update();render()}};
 })();
 </script>
 </body>
