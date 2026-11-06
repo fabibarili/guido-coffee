@@ -39,6 +39,7 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   background:repeating-linear-gradient(to top,#cfd6e2 0 calc(var(--p)*2),#7d8798 0 calc(var(--p)*3),#1d1d1b 0 calc(var(--p)*4))}
 .sign::before{left:calc(var(--p)*11)}.sign::after{right:calc(var(--p)*11)}
 #overlay.menu{background:#000}
+html.menu-on,html.menu-on body{background:#000}html.menu-on #wrap{visibility:hidden} /* menu: só preto atrás, o jogo não aparece */
 /* tela de parabéns: sem fundo, para ver o Guido tomando café na porta da cafeteria */
 #overlay.win{justify-content:center;background:none;pointer-events:none} /* bottom é ajustado no JS: termina no topo da cafeteria */
 #overlay.win .title{font-size:clamp(24px,8vw,34px)}
@@ -820,12 +821,12 @@ function hill(x,baseY,r,col){
 }
 function cloud(x,y){ctx.fillStyle='#fff';ctx.fillRect(x+12,y-9,21,9);ctx.fillRect(x+3,y,51,12);ctx.fillRect(x+30,y-5,15,6);
   ctx.fillStyle='#dcefff';ctx.fillRect(x+3,y+9,51,3)}
-let titleBox=null,cloudFade=0; // área do "PARABÉNS" (coordenadas do mundo): nuvens atrás dele somem suavemente
+let titleBox=null,cloudFade=0; // área do "PARABÉNS" (coordenadas do mundo); na tela final todas as nuvens somem suavemente
 function drawBG(cx){
   if(titleBox)cloudFade=Math.min(1,cloudFade+0.06);else cloudFade=0;
-  const cw=620,cloudAt=(x,y)=>{const hit=titleBox&&x+54>titleBox.x0&&x+3<titleBox.x1&&y+12>titleBox.y0&&y-9<titleBox.y1;
-    if(hit){if(cloudFade>=1)return;ctx.globalAlpha=1-cloudFade}cloud(Math.round(x),y);ctx.globalAlpha=1};
-  for(const [x0,y] of CLOUDS){const x=((x0-cx*0.12)%cw+cw)%cw-80;cloudAt(x,y);if(x+cw<VW)cloudAt(x+cw,y)}
+  if(cloudFade<1){ctx.globalAlpha=1-cloudFade;const cw=620;
+    for(const [x0,y] of CLOUDS){const x=((x0-cx*0.12)%cw+cw)%cw-80;cloud(Math.round(x),y);if(x+cw<VW)cloud(Math.round(x+cw),y)}
+    ctx.globalAlpha=1}
   const p1=cx*0.25,h1=[[90,105],[340,72],[540,120]];
   for(let k=Math.floor(p1/720)-1;k<=Math.floor((p1+VW)/720)+1;k++)for(const [hx,r] of h1)hill(hx+k*720-p1,13*T-r*0.55+8,r,'#a9dd93');
   const p2=cx*0.5,h2=[[60,42],[225,30],[450,51],[600,33]];
@@ -1041,15 +1042,15 @@ function drawHUD(){
 const ov=document.getElementById('overlay');
 const pad2=(n,l)=>String(n).padStart(l,'0');
 const endbar=document.getElementById('endbar');
-function hideOverlay(){titleBox=null;ov.classList.add('hidden');ov.classList.remove('menu','win');ov.innerHTML='';ov.style.bottom='';endbar.className='';endbar.innerHTML=''}
-function show(html,act=newGame){titleBox=null;ov.innerHTML=html;ov.classList.remove('hidden','menu','win');ov.style.bottom='';endbar.className='';endbar.innerHTML='';
+function hideOverlay(){titleBox=null;document.documentElement.classList.remove('menu-on');ov.classList.add('hidden');ov.classList.remove('menu','win');ov.innerHTML='';ov.style.bottom='';endbar.className='';endbar.innerHTML=''}
+function show(html,act=newGame){titleBox=null;document.documentElement.classList.remove('menu-on');ov.innerHTML=html;ov.classList.remove('hidden','menu','win');ov.style.bottom='';endbar.className='';endbar.innerHTML='';
   const b=ov.querySelector('.play');if(b)b.addEventListener('click',e=>{e.stopPropagation();unlockAudio();act()})}
 function goTitle(){ // volta para a tela inicial
   buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(2);P.still=30;particles=[];pops=[];lost=[];bumps.clear();
   flagY=0;checkK=0;winPhase=0;cheerT=-1;cam=0;state='title';resetInput();endTut();showTitle()}
 function showTitle(){
   show(`<div class="sign" role="img" aria-label="Guido Café &amp; Co."></div><canvas id="prev" width="${CW}" height="${CH}"></canvas><button class="play low">JOGAR ▶</button>`);
-  ov.classList.add('menu');
+  ov.classList.add('menu');document.documentElement.classList.add('menu-on');
   const sg=ov.querySelector('.sign'),sc=makeSign(),sp=Math.max(2,Math.min(6,Math.floor(Math.min(innerWidth*0.82,360)/sc.width)));
   sc.style.width=sc.width*sp+'px';sc.style.height=sc.height*sp+'px';sg.style.setProperty('--p',sp+'px');sg.appendChild(sc);
   const pv=document.getElementById('prev'),px=pv.getContext('2d');let i=0;
