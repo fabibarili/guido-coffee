@@ -55,10 +55,10 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   padding:0 7% calc(env(safe-area-inset-bottom)*.5)}
 #pad.on{display:flex}#pad .grp{display:flex;gap:6%;width:44%}
 #pad button{flex:none;width:19vw;max-width:76px;min-width:56px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.95);border:3px solid #fff;box-shadow:4px 4px 0 #000;touch-action:none;cursor:pointer;padding:0}
+  background:#4f86c6;border:3px solid #fff;box-shadow:4px 4px 0 #000;touch-action:none;cursor:pointer;padding:0}
 #pad .grp button{width:auto;flex:1;max-width:76px}
 #pad button svg{width:46%;height:46%;image-rendering:pixelated;fill:#fff}
-#pad button.dn{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;background:rgba(40,40,40,.95)}
+#pad button.dn{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;background:#2f5f9e}
 #pad button.dn svg{fill:#ffe08a}
 /* tutorial de movimento (aparece depois da tela inicial) */
 #tut{position:absolute;left:50%;top:15%;transform:translateX(-50%);width:min(88%,330px);z-index:3;pointer-events:none;
@@ -70,7 +70,7 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 #tut .ok{font-size:12px;color:#8ff08a;text-shadow:2px 2px 0 #000;animation:okp .35s ease-out}
 @keyframes okp{from{transform:scale(.3)}to{transform:scale(1)}}
 #tut .keys{display:flex;gap:8px;align-items:flex-end}
-#tut .keys b{display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(0,0,0,.95);border:2px solid #fff}
+#tut .keys b{display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:#4f86c6;border:2px solid #fff}
 #tut .keys b svg{width:14px;height:14px;fill:#fff}#tut .keys b.ok{border-color:#8ff08a}#tut .keys b.ok svg{fill:#8ff08a}
 #tut .keys .gap{width:14px}#tut .keys span{display:block;font-size:6px;color:#ffe08a;margin-top:4px}
 #tut .keys div{display:flex;flex-direction:column;align-items:center}
