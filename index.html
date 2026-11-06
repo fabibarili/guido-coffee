@@ -821,12 +821,16 @@ function hill(x,baseY,r,col){
 }
 function cloud(x,y){ctx.fillStyle='#fff';ctx.fillRect(x+12,y-9,21,9);ctx.fillRect(x+3,y,51,12);ctx.fillRect(x+30,y-5,15,6);
   ctx.fillStyle='#dcefff';ctx.fillRect(x+3,y+9,51,3)}
-let titleBox=null,cloudFade=0; // área do "PARABÉNS" (coordenadas do mundo); na tela final todas as nuvens somem suavemente
-function drawBG(cx){
-  if(titleBox)cloudFade=Math.min(1,cloudFade+0.06);else cloudFade=0;
-  if(cloudFade<1){ctx.globalAlpha=1-cloudFade;const cw=620;
-    for(const [x0,y] of CLOUDS){const x=((x0-cx*0.12)%cw+cw)%cw-80;cloud(Math.round(x),y);if(x+cw<VW)cloud(Math.round(x+cw),y)}
-    ctx.globalAlpha=1}
+let titleBox=null,cloudFade=0; // área do "PARABÉNS" (coordenadas do mundo)
+function drawBG(cx){ // na tela final as nuvens do céu somem e surgem nuvens só nas laterais, cortadas pela borda da tela, longe do contador e do título
+  if(titleBox)cloudFade=Math.min(1,cloudFade+0.04);else cloudFade=0;
+  const cw=620;
+  if(cloudFade<1){ctx.globalAlpha=1-cloudFade;
+    for(const [x0,y] of CLOUDS){const x=((x0-cx*0.12)%cw+cw)%cw-80;cloud(Math.round(x),y);if(x+cw<VW)cloud(Math.round(x+cw),y)}}
+  if(titleBox&&cloudFade>0){ctx.globalAlpha=cloudFade; // 2 ao lado do contador, 2 abaixo do título (y em coords da tela, -OYW)
+    const tb=Math.round(titleBox.y1+OYW),floor=13*T-SHOP.height-14;
+    for(const [x,y] of [[-15,SAFE_TOP+30],[VW-58,SAFE_TOP+36],[-7,tb+20],[VW-65,tb+50]])cloud(x,Math.min(y-OYW,floor))}
+  ctx.globalAlpha=1;
   const p1=cx*0.25,h1=[[90,105],[340,72],[540,120]];
   for(let k=Math.floor(p1/720)-1;k<=Math.floor((p1+VW)/720)+1;k++)for(const [hx,r] of h1)hill(hx+k*720-p1,13*T-r*0.55+8,r,'#a9dd93');
   const p2=cx*0.5,h2=[[60,42],[225,30],[450,51],[600,33]];
