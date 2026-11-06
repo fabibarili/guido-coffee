@@ -858,7 +858,7 @@ function drawProps(cx){
   if(px>-50&&px<VW+50){
     ctx.fillStyle='#1d1d1b';ctx.fillRect(px-1,3*T-2,5,10*T+2);ctx.fillStyle='#f2f2f2';ctx.fillRect(px,3*T-2,3,10*T+2);
     ctx.fillStyle='#1d1d1b';ctx.fillRect(px-4,3*T-11,11,11);ctx.fillStyle='#f6c945';ctx.fillRect(px-3,3*T-10,9,9);
-    const fy=3*T+2+flagY;
+    const fy=3*T+2+(9*T-6)-flagY; // começa embaixo e sobe quando o Guido chega
     ctx.fillStyle='#1d1d1b';ctx.fillRect(px-31,fy-1,31,23);ctx.fillStyle='#4f86c6';ctx.fillRect(px-30,fy,30,21);
     ctx.fillStyle='#2f5f9e';ctx.fillRect(px-30,fy+18,30,3);ptext(ctx,'G',px-19,fy+5,'#fff',2);
     ctx.fillStyle='#5e3517';ctx.fillRect(px-10,13*T-12,24,12);ctx.fillStyle='#c7883f';ctx.fillRect(px-9,13*T-11,22,10);
