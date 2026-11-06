@@ -600,7 +600,7 @@ function updatePlayer(){
   }else{const f=P.onGround?0.24:0.06;P.vx=Math.abs(P.vx)<=f?0:P.vx-Math.sign(P.vx)*f}
   if(input.jumpPressed){P.buf=8;input.jumpPressed=false}
   P.coyote=P.onGround?6:P.coyote-1;
-  if(P.buf>0&&P.coyote>0){P.vy=-9.6;P.coyote=0;P.buf=0;P.onGround=false;sfx('jump');dust(P.x+P.w/2,P.y+P.h,3);if(tut)tut.jumps++}
+  if(P.buf>0&&P.coyote>0){P.vy=-9.6;P.coyote=0;P.buf=0;P.onGround=false;sfx('jump');dust(P.x+P.w/2,P.y+P.h,3)}
   P.buf--;
   P.vy=Math.min(P.vy+((P.vy<0&&input.jump)?0.42:0.95),9);
   moveX(P);
@@ -1048,25 +1048,17 @@ function showWin(){
   ov.classList.add('win')}
 
 /* ================= TUTORIAL =================
-   Logo depois da tela inicial, um passo só: andar com ◀ ▶ e pular com ▲.
+   Logo depois da tela inicial, um passo só: andar com ◀ ▶ e pular com ▲. Some no primeiro toque.
    Os inimigos ficam parados até o tutorial acabar. */
 const tutEl=document.getElementById('tut');let tut=null;
 const ICO=k=>document.querySelector(`#pad [data-k="${k}"] svg`).outerHTML;
-function startTut(){tut={dist:0,jumps:0,okT:0,endT:0};
+function startTut(){tut={};
   tutEl.innerHTML='<div class="tt">CONTROLES</div><div class="keys">'+
     `<div><b data-t="walk">${ICO('left')}</b></div><div><b data-t="walk">${ICO('right')}</b></div><div class="gap"></div><div><b data-t="jump">${ICO('jump')}</b></div></div>`+
     '<div class="tx">Use as setas para andar e o botão de cima para pular. Pegue os grãos e chegue à cafeteria!</div>';
   tutEl.className='on'}
 function endTut(){tut=null;tutEl.className='';tutEl.innerHTML=''}
-function tutTick(){
-  if(tut.endT){if(--tut.endT===20)tutEl.classList.add('fade');if(tut.endT<=0)endTut();return}
-  if(P.dead)return;
-  tut.dist+=Math.abs(P.vx);
-  const walk=tut.dist>3*T,jump=tut.jumps>0;
-  tutEl.querySelectorAll('[data-t="walk"]').forEach(b=>b.classList.toggle('ok',walk));
-  tutEl.querySelectorAll('[data-t="jump"]').forEach(b=>b.classList.toggle('ok',jump));
-  if(walk&&jump){tut.endT=90;sfx('bean');tutEl.querySelector('.tx').outerHTML='<div class="ok">MUITO BEM!</div>'}
-}
+function tutTick(){if(input.left||input.right||input.jump)endTut()} // sumiu assim que o jogador usou um comando
 
 /* ================= CONTROLES =================
    Botões na faixa de baixo: ◀ ▶ andam, ▲ pula (segurar = pulo mais alto).
