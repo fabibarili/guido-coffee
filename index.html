@@ -372,17 +372,28 @@ const TILES=(()=>{
     for(let i=0;i<N;i++){const h=7+Math.round(Math.sin(i*1.3)*1.2+(i%5===0?1:0));
       x.fillStyle='#3e8e2e';x.fillRect(i,0,1,h+1);x.fillStyle='#5cc23e';x.fillRect(i,0,1,h)}
     x.fillStyle='#8fe262';x.fillRect(0,0,N,2);x.fillStyle='#74d64c';for(let i=1;i<N;i+=4)x.fillRect(i,2,2,1)}
-  t.crate=newCv(N,N);{const x=t.crate.getContext('2d'); // saco de café (juta) amarrado no topo
-    const f=(c,a,b,w,h)=>{x.fillStyle=c;x.fillRect(a,b,w,h)};
-    f('#4a3018',7,0,10,1);f('#4a3018',6,1,12,3);f('#4a3018',8,4,8,2);          // contorno do bico
-    f('#d8b47c',8,1,8,2);f('#bf9560',9,3,6,1);                                  // pano franzido
-    f('#7a2e1a',7,4,10,2);f('#a8442a',8,4,8,1);                                 // cordão
-    f('#4a3018',2,6,20,1);f('#4a3018',1,7,22,16);f('#4a3018',2,23,20,1);        // contorno do corpo
-    f('#c9a06a',2,7,20,16);f('#ddb980',3,7,16,2);f('#ddb980',2,9,2,10);         // juta + brilho
-    f('#a57c4a',19,9,3,14);f('#a57c4a',3,21,19,2);                              // sombra
-    x.fillStyle='#b48b56';for(let yy=8;yy<22;yy+=2)for(let xx=3+(yy%4?1:0);xx<20;xx+=4)x.fillRect(xx,yy,1,1); // trama
-    f('#7a4f2a',4,10,15,1);f('#7a4f2a',4,19,15,1);                              // faixas do carimbo
-    x.drawImage(BEAN,8,11)}                                                     // grão carimbado
+  t.crate=newCv(N,N);{const x=t.crate.getContext('2d');
+    x.fillStyle='#5e3517';x.fillRect(0,0,N,N);x.fillStyle='#c7883f';x.fillRect(1,1,N-2,N-2);
+    for(const y of [1,9,17]){x.fillStyle='#e3a95e';x.fillRect(1,y,N-2,1)}
+    for(const y of [8,16,E-1]){x.fillStyle='#8a5526';x.fillRect(1,y,N-2,1)}
+    x.fillStyle='#a86d32';x.fillRect(6,3,6,1);x.fillRect(13,11,7,1);x.fillRect(4,19,6,1);
+    rivets(x,'#3b2412')}
+  // montanha de açúcar: 8 variações conforme as bordas expostas (1=topo, 2=esquerda, 4=direita)
+  t.sugar=[];for(let m=0;m<8;m++){const cv=newCv(N,N),x=cv.getContext('2d'),RR=9;
+    const inside=(a,b)=>{if(a<0||a>E||b<0||b>E)return false;
+      if(m&1&&m&2&&a<RR&&b<RR&&(a-RR)**2+(b-RR)**2>RR*RR)return false;
+      if(m&1&&m&4&&a>E-RR&&b<RR&&(a-(E-RR))**2+(b-RR)**2>RR*RR)return false;
+      return true};
+    const edge=(a,b)=>!inside(a-1,b)&&(m&2||a>0)||!inside(a+1,b)&&(m&4||a<E)||!inside(a,b-1)&&(m&1||b>0);
+    for(let b=0;b<N;b++)for(let a=0;a<N;a++){if(!inside(a,b))continue;
+      const h=(a*37+b*91+m*13)%23;
+      let c=h===0?'#ffffff':h<3?'#c9cfdb':h<5?'#e6f2ff':'#f4f6fa';
+      if(m&4&&a>=E-3||b>=E-1)c=h<6?'#b8bfcd':'#d6dbe5';                        // sombra
+      if(m&1&&b<=3&&!(m&4&&a>=E-3))c=h<4?'#ffffff':'#fbfdff';                   // brilho no topo
+      if(edge(a,b))c='#5b6475';                                                  // contorno
+      x.fillStyle=c;x.fillRect(a,b,1,1)}
+    if(m&1){x.fillStyle='#ffffff';x.fillRect(11,5,1,3);x.fillRect(10,6,3,1)}   // brilhinho
+    t.sugar.push(cv)}
   t.q=newCv(N,N);{const x=t.q.getContext('2d');
     x.fillStyle='#6e3f0c';x.fillRect(0,0,N,N);x.fillStyle='#f5b83d';x.fillRect(1,1,N-2,N-2);
     x.fillStyle='#ffe08a';x.fillRect(1,1,N-2,1);x.fillRect(1,1,1,N-2);
@@ -410,7 +421,7 @@ function buildLevel(){
   const ground=(a,b,top=13)=>{for(let x=a;x<=b;x++)for(let y=top;y<ROWS;y++)t[y][x]='#'};
   const S_=(x,y,ch)=>{t[y][x]=ch};
   const row=(a,b,y,ch)=>{for(let x=a;x<=b;x++)t[y][x]=ch};
-  const col=(x,h)=>{for(let k=0;k<h;k++)t[12-k][x]='C'};
+  const col=(x,h)=>{for(let k=0;k<h;k++)t[12-k][x]='S'}; // pilhas no chão = montanha de açúcar
   const bean=(x,y)=>bn.push({x:x*T+2,y:y*T+2,got:false});
   const beanRow=(a,b,y)=>{for(let x=a;x<=b;x++)bean(x,y)};
   const arc=x=>{bean(x,10);bean(x+1,9);bean(x+2,10)};
@@ -419,7 +430,7 @@ function buildLevel(){
   // 1 — início
   ground(0,24);beanRow(7,10,10);S_(12,9,'?');S_(13,9,'C');S_(14,9,'?');S_(15,9,'C');S_(16,9,'?');S_(14,5,'?');sugar(20);
   bean(25,10);bean(26,10);
-  // 2 — pirâmide de sacos de café
+  // 2 — montanha de açúcar
   ground(27,56);[1,2,3,3,2,1].forEach((h,i)=>col(32+i,h));sugar(29);row(41,45,9,'=');beanRow(41,45,8);sugar(48);sugar(53);
   arc(57);
   // 3 — planalto
@@ -439,7 +450,7 @@ function buildLevel(){
   L={t,w:LW};enemies=en;beans=bn;
 }
 const tileAt=(tx,ty)=>(ty<0||ty>=ROWS||tx<0||tx>=LW)?'.':L.t[ty][tx];
-function solidAt(tx,ty){if(tx<0||tx>=LW)return true;const ch=tileAt(tx,ty);return ch==='#'||ch==='C'||ch==='?'||ch==='X'}
+function solidAt(tx,ty){if(tx<0||tx>=LW)return true;const ch=tileAt(tx,ty);return ch==='#'||ch==='C'||ch==='S'||ch==='?'||ch==='X'}
 
 /* ================= FÍSICA ================= */
 function moveX(o){
@@ -584,7 +595,7 @@ function bumpTile(tx,ty){
   const ch=tileAt(tx,ty);
   if(ch==='?'){L.t[ty][tx]='X';pops.push({x:tx*T+2,y:ty*T-14,vy:-5.5,life:26});getBean()}
   else sfx('bump');
-  if(ch==='?'||ch==='C')bumps.set(ty*1000+tx,10);
+  if(ch==='?'||ch==='C'||ch==='S')bumps.set(ty*1000+tx,10);
   for(const e of enemies)if(!e.dead&&e.active&&Math.abs(e.y+e.h-ty*T)<3&&e.x<tx*T+T&&e.x+e.w>tx*T){
     e.dead=1;e.flip=true;e.vy=-5;score+=200;sfx('stomp')}
 }
@@ -667,7 +678,8 @@ function drawTiles(cx){
     let img;
     if(ch==='#'){const top=ty===0||L.t[ty-1][tx]!=='#';img=top?TILES.grass:TILES.dirt;
       if(top&&((tx*7919)%9===0)){ctx.fillStyle='#3e8e2e';ctx.fillRect(px+11,py-5,1,5);ctx.fillStyle=(tx%2)?'#fff':'#ffd84a';ctx.fillRect(px+9,py-8,5,3);ctx.fillRect(px+10,py-9,3,5);ctx.fillStyle='#f39a32';ctx.fillRect(px+11,py-7,1,1)}}
-    else if(ch==='C')img=TILES.crate;else if(ch==='?')img=TILES.q;else if(ch==='X')img=TILES.used;else if(ch==='=')img=TILES.plank;
+    else if(ch==='C')img=TILES.crate;else if(ch==='S'){const no=(x2,y2)=>x2<0||x2>=LW||y2<0||L.t[y2][x2]!=='S';
+      img=TILES.sugar[(no(tx,ty-1)?1:0)|(no(tx-1,ty)?2:0)|(no(tx+1,ty)?4:0)]}else if(ch==='?')img=TILES.q;else if(ch==='X')img=TILES.used;else if(ch==='=')img=TILES.plank;
     if(img)ctx.drawImage(img,px,py);
     if(ch==='?'&&(frame>>3)%8===0){ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(px+1,py+1,T-2,T-2)}
   }
