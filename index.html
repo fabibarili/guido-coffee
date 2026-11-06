@@ -39,6 +39,13 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   background:repeating-linear-gradient(to top,#cfd6e2 0 calc(var(--p)*2),#7d8798 0 calc(var(--p)*3),#1d1d1b 0 calc(var(--p)*4))}
 .sign::before{left:calc(var(--p)*11)}.sign::after{right:calc(var(--p)*11)}
 #overlay.menu{background:rgba(0,0,0,.95)}
+/* tela de parabéns: fundo leve para ver o Guido tomando café na porta da cafeteria */
+#overlay.win{justify-content:flex-start;padding-top:max(9vh,env(safe-area-inset-top));background:rgba(15,25,40,.35)}
+#overlay.win .title{font-size:clamp(24px,8vw,34px)}
+#overlay.win .big{font-size:12px;line-height:1.6}
+/* acento agudo desenhado à mão: o É maiúsculo da fonte pixel sai parecendo minúsculo */
+.ac{position:relative}.ac::after{content:'';position:absolute;left:35%;top:-.32em;width:.34em;height:.14em;background:currentColor;
+  transform:skewY(-30deg);box-shadow:.1em .1em 0 #2f5f9e,.2em .2em 0 #000}
 /* posições definidas no Figma (tela de 390x844): Guido do menu em 37,4% da altura, botões em 74,8% */
 #overlay.menu #prev{position:absolute;top:37.4%;left:0;right:0;margin:0 auto}
 #overlay .play.low{position:absolute;top:74.8%;left:0;right:0;margin:0 auto;width:fit-content}
@@ -524,11 +531,11 @@ function sfx(type){
 
 /* ================= ESTADO ================= */
 const input={left:false,right:false,jump:false,jumpPressed:false};
-let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,winPhase=0;
+let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,winPhase=0,cheerT=-1;
 const PW=22,PH=38;
 function newPlayer(tx){return{x:tx*T,y:13*T-PH,w:PW,h:PH,vx:0,vy:0,face:1,onGround:false,coyote:0,buf:0,runT:0,still:0,dead:false,inv:0}}
 function newGame(){const fromTitle=state==='title';buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);particles=[];pops=[];lost=[];bumps.clear();
-  flagY=0;winPhase=0;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
+  flagY=0;winPhase=0;cheerT=-1;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
 function respawn(){P=newPlayer(checkpoint);P.inv=90;state='play';
   enemies.forEach(e=>{if(!e.dead&&Math.abs(e.x-P.x)<6*T)e.x=P.x+9*T})}
 function dust(x,y,n=5){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*1.6,vy:-Math.random()*1.2,life:18+Math.random()*10,col:'#ffffff',s:2})}
@@ -613,7 +620,7 @@ function updatePlayer(){
       if(P.inv<=0)dropBeans(e);
     }
   }
-  if(P.x+P.w>=POLE_X&&!P.dead){state='win';winPhase=0;winT=0;P.vx=0;P.vy=0;P.x=POLE_X-P.w+3;
+  if(P.x+P.w>=POLE_X&&!P.dead){state='win';endTut();winPhase=0;winT=0;P.vx=0;P.vy=0;P.x=POLE_X-P.w+3;
     score+=Math.max(100,Math.round((13*T-(P.y+P.h))/8)*100);sfx('win')}
 }
 function bumpTile(tx,ty){
@@ -647,7 +654,7 @@ function updateEnemies(){
   enemies=enemies.filter(e=>!(e.dead>(e.flip?120:35)));
 }
 function updateWin(){
-  winT++;
+  winT++;if(cheerT>=0)cheerT++;else if(winPhase>=1&&SHOP_X+DOOR_DX-(P.x+P.w/2)<150)cheerT=0; // os baristas veem o Guido chegando
   if(winPhase===0){
     if(P.y+P.h<13*T){P.y=Math.min(13*T-P.h,P.y+3)}
     flagY=Math.min(flagY+3,9*T-6);
@@ -699,8 +706,8 @@ const SHOP=(()=>{const cv=newCv(SHOP_W,SHOP_H),x=cv.getContext('2d'),R=(c,a,b,w,
   for(let k=0;k<SHOP_W;k+=46)R('#5d636c',Math.min(k,SHOP_W-3),85,2,27);R('#5d636c',0,85,SHOP_W,2);
   // laje
   R('#1d1d1b',0,111,SHOP_W,12);R('#8a8f98',1,112,SHOP_W-2,10);R('#aab0b8',1,112,SHOP_W-2,2);R('#6b7079',1,120,SHOP_W-2,2);
-  // fachada preta com letreiro
-  R('#1d1d1b',0,122,SHOP_W,106);R('#262624',1,123,SHOP_W-2,23);R('#33332f',1,123,SHOP_W-2,1);
+  // fachada azul (mesma cor da coleira do Guido) com letreiro
+  R('#1d1d1b',0,122,SHOP_W,106);R('#4f86c6',1,123,SHOP_W-2,23);R('#7aa6db',1,123,SHOP_W-2,1);R('#2f5f9e',1,145,SHOP_W-2,1);
   const gx=Math.round((SHOP_W-(58+8+40))/2),gy=128;
   glowText(x,(dx,dy,c)=>stext(x,'GUIDO',gx+dx,gy+dy,2,c),'#ffffff');
   glowText(x,(dx,dy,c)=>{ptext(x,'CAF',gx+66+dx,gy+8+dy,c);ptext(x,'E',gx+78+dx,gy+8+dy,c);x.fillRect(gx+80+dx,gy+6+dy,1,1);
@@ -710,9 +717,9 @@ const SHOP=(()=>{const cv=newCv(SHOP_W,SHOP_H),x=cv.getContext('2d'),R=(c,a,b,w,
   for(const lx of [24,62,100,200]){R('#3b3b36',lx,146,1,12);R('#ffe28a',lx-2,158,5,3);x.globalAlpha=0.16;R('#ffe28a',lx-7,161,15,14);x.globalAlpha=1}
   R('#4a3324',1,196,136,28);R('#6b4a33',1,196,136,2);R('#c9a77a',8,190,6,6);R('#f2f2f2',20,192,4,4);R('#c9a77a',112,190,7,6);R('#d9d2c2',60,176,30,14);R('#1d1d1b',60,176,30,1);R('#5a3a22',64,180,22,1);R('#5a3a22',64,184,16,1); // balcão
   x.globalAlpha=0.1;for(let k=-40;k<SHOP_W;k+=34)for(let y=0;y<78;y++)R('#ffffff',k+Math.round(y*0.6),146+y,8,1);x.globalAlpha=1;
-  for(const mx of [0,46,92,138,176,SHOP_W-2])R('#1d1d1b',Math.min(mx,SHOP_W-2),146,2,78);
+  for(const mx of [0,46,92,138,176,SHOP_W-2]){const m=Math.min(mx,SHOP_W-2);R('#1d1d1b',m,146,2,78);if(m>0&&m<SHOP_W-2)R('#4f86c6',m,146,1,78)}
   // porta quadriculada
-  const dx0=DOOR_DX-19;R('#1d1d1b',dx0,146,38,78);R('#1f2a31',dx0+2,148,34,76);
+  const dx0=DOOR_DX-19;R('#1d1d1b',dx0,146,38,78);R('#4f86c6',dx0+1,146,36,2);R('#4f86c6',dx0+1,146,1,78);R('#4f86c6',dx0+36,146,1,78);R('#1f2a31',dx0+2,148,34,76);
   for(let k=0;k<7;k++)R('#1d1d1b',dx0+2,148+k*11,34,1);R('#1d1d1b',dx0+18,148,2,76);for(const k of [9,27])R('#1d1d1b',dx0+k,148,1,76);
   R('#c9ccd2',dx0+15,182,2,12);R('#c9ccd2',dx0+21,182,2,12);
   // degrau / calçada
@@ -733,26 +740,58 @@ function barista(head,extra,pal){
   const g=grid(32,43),s=(a,x,y)=>stamp(g,a,x+2,y);BODY.forEach(([y,r])=>s([r],0,y));extra(s);head.forEach((r,j)=>s([r],0,j+1));
   return outline1(epx(toCanvas(g,pal)))}
 // 1) barba comprida, gorro preto, óculos de tartaruga, camiseta branca, braços tatuados e chaleira bico de ganso
-const BARISTA1=barista([
+const B1HEAD=[
   ".........HHHHHH","........HHHHHHHH",".......HHHHHHHHHH",".......HhHhHhHhHH",".......HHHHHHHHHH",
   ".......BSSSSSSSSB",".......BSDDSSDDSB",".......BSwQSSQwSB",".......BSSSSSSSSB",".......BbSSssSSbB",
   ".......BBbSSSSbBB",".......BBDDDDDDBB",".......BBBBssBBBB",".......BBBBBBBBBB","........BBbBBbBB",
-  "........BBBBBBBB",".........BBbBBB",".........BBBBBB","..........BBBB","...........BB"],g=>{
+  "........BBBBBBBB",".........BBbBBB",".........BBBBBB","..........BBBB","...........BB"],
+  B1X=g=>{
   const L=["Sr","rn","yS","Sv","nr","Sn","rS"],Rr=["nS","yr","Sn","rS","Sv","yS","nS"];
   for(let k=0;k<7;k++){g([L[k]],3,21+k);g([Rr[k]],19,21+k)}
   g(["SS"],3,28);g(["ss"],3,29);g(["SS"],19,28);g(["ss"],19,29);
   g(["....o.....","..MMMM...M",".MMMMMM..m",".MMMMMM..m",".MMMMMm.m.",".mMMMMmm..","..mmmm...."],17,29)},
-  {H:'#26262b',h:'#3d3d45',S:'#f0c3a0',s:'#d89c78',G:'#6e3a16',g:'#5e3416',L:'#cfe6f5',w:'#ffffff',Q:'#2a1d14',B:'#6a3c1e',b:'#8f5730',D:'#4c2a14',
+  B1P={H:'#26262b',h:'#3d3d45',S:'#f0c3a0',s:'#d89c78',G:'#6e3a16',g:'#5e3416',L:'#cfe6f5',w:'#ffffff',Q:'#2a1d14',B:'#6a3c1e',b:'#8f5730',D:'#4c2a14',
    T:'#f6f6f3',t:'#d3d7df',A:'#f0c3a0',r:'#c8443a',n:'#2f5a8a',y:'#e3b443',v:'#4f8f50',P:'#34405a',p:'#262f44',K:'#2a2a2e',W:'#e8e8e8',
-   M:'#dfe3e8',m:'#9aa0aa',o:'#8a5a2b'});
+   M:'#dfe3e8',m:'#9aa0aa',o:'#8a5a2b'};
+const happy=(head,rows)=>head.map((r,j)=>rows[j]||r); // variante feliz: olhinhos fechados e sorriso
+const BARISTA1=barista(B1HEAD,B1X,B1P),BARISTA1_HAPPY=barista(happy(B1HEAD,{7:".......BSQQSSQQSB"}),B1X,B1P);
 // 2) cabelo curto cacheado, óculos pretos, camiseta preta, relógio e porta-filtro
-const BARISTA2=barista([
+const B2HEAD=[
   "","",".........hHhHhH","........HHHHHHHH",".......HHhHHHhHHH",".......HHHHHHHHHH",".......HSSSSSSSSH",
   ".......SSHHSSHHSS",".......SSwQSSQwSS",".......SSSSSSSSSS",".......cSSSccSSSc","........SSSccSSS","........SSSuuSSS",
-  "........cSSSSSSc",".........cSSSSc","..........cccc"],g=>{
-  g(["EM"],19,27);g([".....mMMMm","EEE..MMMMM",".....mMMm.","......mm.."],0,28)},
-  {H:'#2a1b14',h:'#4a3328',S:'#a0673f',c:'#7f4c2c',E:'#1d1d1b',L:'#cfe6f5',w:'#ffffff',Q:'#1d1d1b',u:'#5a2e1e',T:'#36363b',t:'#26262a',A:'#a0673f',
-   P:'#4b4f58',p:'#383b42',K:'#1d1d1b',W:'#e8e8e8',M:'#d0d4da',m:'#8d939c'});
+  "........cSSSSSSc",".........cSSSSc","..........cccc"],
+  B2X=g=>{g(["EM"],19,27);g([".....mMMMm","EEE..MMMMM",".....mMMm.","......mm.."],0,28)},
+  B2P={H:'#2a1b14',h:'#4a3328',S:'#a0673f',c:'#7f4c2c',E:'#1d1d1b',L:'#cfe6f5',w:'#ffffff',Q:'#1d1d1b',u:'#5a2e1e',T:'#36363b',t:'#26262a',A:'#a0673f',
+   P:'#4b4f58',p:'#383b42',K:'#1d1d1b',W:'#e8e8e8',M:'#d0d4da',m:'#8d939c'};
+const BARISTA2=barista(B2HEAD,B2X,B2P),
+  BARISTA2_HAPPY=barista(happy(B2HEAD,{8:".......SSQQSSQQSS",12:"........SSuuuuSS",13:"........cSSuuSSc"}),B2X,B2P);
+/* fonte pixel 5x8 (com descendente) só para os balões de fala — nítida no canvas ampliado */
+const LFONT={Q:[".111.","1...1","1...1","1...1","1.1.1","1..1.",".11.1"],u:["","","1...1","1...1","1...1","1..11",".11.1"],
+  e:["","",".111.","1...1","11111","1....",".111."],r:["","","1.11.","11..1","1....","1....","1...."],
+  m:["","","11.1.","1.1.1","1.1.1","1.1.1","1.1.1"],p:["","","1111.","1...1","1...1","1111.","1....","1...."],
+  a:["","",".111.","....1",".1111","1...1",".1111"],s:["","",".1111","1....",".111.","....1","1111."],
+  d:["....1","....1",".1111","1...1","1...1","1...1",".1111"],i:["1","","1","1","1","1","1"],
+  n:["","","1111.","1...1","1...1","1...1","1...1"],h:["1....","1....","1111.","1...1","1...1","1...1","1...1"],
+  o:["","",".111.","1...1","1...1","1...1",".111."],'?':[".111.","1...1","....1","..11.","..1..","","..1.."],
+  V:["1...1","1...1","1...1","1...1","1...1",".1.1.","..1.."],G:[".111.","1...1","1....","1.111","1...1","1...1",".111."],
+  '!':["1","1","1","1","1","","1"]};
+const lw=t=>[...t].reduce((w,ch,i)=>w+(ch===' '?3:Math.max(...LFONT[ch].map(r=>r.length)))+(i?1:0),0);
+function ltext(t,px,py){let x0=px;for(const ch of t){if(ch===' '){x0+=4;continue}const g=LFONT[ch],w=Math.max(...g.map(r=>r.length));
+  g.forEach((r,j)=>{for(let q=0;q<r.length;q++)if(r[q]==='1')ctx.fillRect(x0+q,py+j,1,1)});x0+=w+1}}
+/* balão de fala em pixel art; t = quadros desde que apareceu (o balão "estoura" para dentro) */
+function bubble(lines,cxp,bottom,tailX,t){
+  if(t<0)return;const k=Math.min(1,t/8),s=k<1?0.4+k*0.8-(k>0.75?(k-0.75)*0.8:0):1;
+  ctx.save();
+  const w=Math.max(...lines.map(lw))+10,h=lines.length*10+6;
+  const x=Math.round(Math.max(3,Math.min(VW-3-w,cxp-w/2))),y=Math.round(bottom-h); // não deixa o balão sair da tela
+  tailX=Math.max(x+5,Math.min(x+w-8,tailX));
+  ctx.translate(tailX,bottom+5);ctx.scale(s,s);ctx.translate(-tailX,-bottom-5);
+  const box=(c,d)=>{ctx.fillStyle=c;ctx.fillRect(x+2-d,y-d,w-4+2*d,h+2*d);ctx.fillRect(x-d,y+2-d,w+2*d,h-4+2*d);ctx.fillRect(x+1-d,y+1-d,w-2+2*d,h-2+2*d)};
+  box('#1d1d1b',1);box('#ffffff',0);
+  ctx.fillStyle='#1d1d1b';for(let i=0;i<5;i++)ctx.fillRect(tailX-2+Math.floor(i/2),bottom+i,6-i,1); // rabinho
+  ctx.fillStyle='#ffffff';for(let i=0;i<4;i++)ctx.fillRect(tailX-1+Math.floor(i/2),bottom-1+i,4-i,1);
+  ctx.fillStyle='#d3d7df';ctx.fillRect(x+1,y+h-2,w-2,1);
+  ctx.fillStyle='#1d1d1b';lines.forEach((l,i)=>ltext(l,x+5,y+3+i*10));ctx.restore()}
 const HEART=[".11.11.","1111111","1111111",".11111.","..111..","...1..."];
 function heart(px,py,a){ctx.globalAlpha=a;ctx.fillStyle='#e8425a';HEART.forEach((r,j)=>{for(let i=0;i<7;i++)if(r[i]==='1')ctx.fillRect(px+i,py+j,1,1)});
   ctx.fillStyle='#ffb3c0';ctx.fillRect(px+1,py+1,1,1);ctx.globalAlpha=1}
@@ -810,14 +849,15 @@ function drawProps(cx){
       for(let i=0;i<=58;i++){const yy=sy+11+Math.round(Math.sin(i/58*Math.PI)*6);ctx.fillStyle='#3b3b36';ctx.fillRect(sx+a+i,yy,1,1);
         if(i%8===4){const on=((frame>>4)+k*3+i)%7!==0;ctx.fillStyle=on?'#ffe38a':'#c9a24a';ctx.fillRect(sx+a+i-1,yy+1,3,3);
           if(on){ctx.globalAlpha=0.25;ctx.fillRect(sx+a+i-2,yy,5,5);ctx.globalAlpha=1}}}}
-    const party=state==='win'&&winPhase===2,hop=ph=>party?-Math.round(Math.abs(Math.sin((winT+ph)/7))*6):0;
-    const b1x=sx+100-27,b1y=13*T-82+hop(0),b2x=sx+210-27,b2y=13*T-82+hop(9);
-    ctx.drawImage(BARISTA1,b1x,b1y);ctx.drawImage(BARISTA2,b2x,b2y);
+    const party=state==='win'&&winPhase===2,cheer=state==='win'&&cheerT>=0;
+    const b1x=sx+100-27,b2x=sx+210-27,b1y=13*T-82,b2y=b1y; // felizes (olhinhos fechados) quando veem o Guido
+    ctx.drawImage(cheer?BARISTA1_HAPPY:BARISTA1,b1x,b1y);ctx.drawImage(cheer?BARISTA2_HAPPY:BARISTA2,b2x,b2y);
     ctx.fillStyle='#ffffff'; // vapor saindo do bico da chaleira
     for(let i=0;i<3;i++){const ph=(frame*0.35+i*6)%18;ctx.globalAlpha=Math.max(0,1-ph/18)*0.85;
       ctx.fillRect(b1x+57+Math.round(Math.sin((frame+i*25)/10)*1.5),Math.round(b1y+57-ph),1,2)}
     ctx.globalAlpha=1;
     if(party)for(let i=0;i<3;i++){const t=(winT+i*22)%66;heart(Math.round(SHOP_X+DOOR_DX-cx-3+Math.sin((winT+i*30)/9)*8+(i-1)*10),Math.round(13*T-56-t*0.6),Math.min(1,(66-t)/20))}
+    if(cheer){bubble(['Quer um','passadinho?'],b1x+30,b1y-2,b1x+34,cheerT-6);bubble(['Vem Guido!'],b2x+30,b2y+4,b2x+32,cheerT-30)}
   }
 }
 function drawBeans(cx){
@@ -849,7 +889,15 @@ function dogFrame(){
   if(P.still<25)return DOG.stand;
   const t=P.still;if(t%200>188)return DOG.blink;return DOG.sit[Math.floor(t/16)%2];
 }
+const SIP_BASE=(()=>{const d=DOG_SIP.hold[0].getContext('2d').getImageData(0,0,CW,CH).data;
+  for(let y=CH-1;y>=0;y--)for(let x=0;x<CW;x++)if(d[(y*CW+x)*4+3]>0)return y+1;return CH})();
 function drawPlayer(cx){
+  if(state==='win'&&winPhase===2){ // sentado na porta da cafeteria tomando café: segura o copo (vapor) e dá goles
+    const t=winT%150,sip=t>=90&&t<135,set=sip?DOG_SIP.sip:DOG_SIP.hold,x=Math.round(P.x+P.w/2-CW/2-cx),y=Math.round(P.y+P.h-SIP_BASE);
+    ctx.drawImage(set[Math.floor(winT/16)%2],x,y);
+    if(!sip){ctx.fillStyle='#fff';for(let s=0;s<2;s++)for(let k=0;k<3;k++){const ph=(winT*0.12+k*3+s*1.5)%9;ctx.globalAlpha=Math.max(0,1-ph/9)*0.9;
+      ctx.fillRect(x+39+s*3+Math.round(Math.sin((winT+k*20+s*35)/14)),Math.round(y+13-ph),1,1)}ctx.globalAlpha=1}
+    return}
   const fr=dogFrame(),img=fr[P.face>0?0:1];
   if(P.inv>0&&(P.inv>>2)%2)return;
   const x=Math.round(P.x+P.w/2-(P.face>0?DOG_CX:DW-DOG_CX)-cx),y=Math.round(P.y+P.h-DOG_BASE);
@@ -972,9 +1020,12 @@ function drawHUD(){
 /* ================= TELAS ================= */
 const ov=document.getElementById('overlay');
 const pad2=(n,l)=>String(n).padStart(l,'0');
-function hideOverlay(){ov.classList.add('hidden');ov.classList.remove('menu');ov.innerHTML=''}
-function show(html){ov.innerHTML=html;ov.classList.remove('hidden','menu');
-  const b=ov.querySelector('.play');if(b)b.addEventListener('click',e=>{e.stopPropagation();unlockAudio();newGame()})}
+function hideOverlay(){ov.classList.add('hidden');ov.classList.remove('menu','win');ov.innerHTML=''}
+function show(html,act=newGame){ov.innerHTML=html;ov.classList.remove('hidden','menu','win');
+  const b=ov.querySelector('.play');if(b)b.addEventListener('click',e=>{e.stopPropagation();unlockAudio();act()})}
+function goTitle(){ // volta para a tela inicial
+  buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(2);P.still=30;particles=[];pops=[];lost=[];bumps.clear();
+  flagY=0;winPhase=0;cheerT=-1;cam=0;state='title';resetInput();endTut();showTitle()}
 function showTitle(){
   show(`<div class="sign" role="img" aria-label="Guido Café &amp; Co."></div><canvas id="prev" width="${CW}" height="${CH}"></canvas><button class="play low">JOGAR ▶</button>`);
   ov.classList.add('menu');
@@ -989,9 +1040,9 @@ function showTitle(){
 }
 function showOver(){show(`<div class="title" style="font-size:22px">FIM DE JOGO</div><div class="sub keep">${beanCount} grãos · ${pad2(score,6)} pontos</div><button class="play low">JOGAR NOVAMENTE</button>`)}
 function showWin(){
-  let best=score;try{best=+localStorage.getItem('guido_best')||0;if(score>best){localStorage.setItem('guido_best',score);best=score}}catch(e){best=score}
-  show(`<div class="title" style="font-size:20px">AU AU!</div><div class="big">VOCÊ CHEGOU!</div>
-  <div class="sub">${beanCount} grãos · ${pad2(score,6)} pontos<br>recorde: ${pad2(best,6)}</div><button class="play">↻ JOGAR DE NOVO</button>`)}
+  try{if(score>(+localStorage.getItem('guido_best')||0))localStorage.setItem('guido_best',score)}catch(e){}
+  show(`<div class="title" aria-label="PARABÉNS">PARAB<span class="ac">E</span>NS</div><div class="big">Agora a Guido tem café!</div><button class="play low">JOGAR NOVAMENTE</button>`,goTitle);
+  ov.classList.add('win')}
 
 /* ================= TUTORIAL =================
    Logo depois da tela inicial: ensina a andar (pressionar e arrastar para os lados) e a pular (arrastar para cima).
