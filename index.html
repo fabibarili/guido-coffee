@@ -39,10 +39,10 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   background:repeating-linear-gradient(to top,#cfd6e2 0 calc(var(--p)*2),#7d8798 0 calc(var(--p)*3),#1d1d1b 0 calc(var(--p)*4))}
 .sign::before{left:calc(var(--p)*11)}.sign::after{right:calc(var(--p)*11)}
 #overlay.menu{background:rgba(0,0,0,.95)}
-/* tela de parabéns: fundo leve para ver o Guido tomando café na porta da cafeteria */
-#overlay.win{justify-content:flex-start;padding-top:max(9vh,env(safe-area-inset-top));background:rgba(15,25,40,.35)}
+/* tela de parabéns: sem fundo, para ver o Guido tomando café na porta da cafeteria */
+#overlay.win{justify-content:center;background:none;pointer-events:none} /* bottom é ajustado no JS: termina no topo da cafeteria */
 #overlay.win .title{font-size:clamp(24px,8vw,34px)}
-#overlay.win .big{font-size:12px;line-height:1.6}
+#overlay.win .big{font-size:12px;line-height:1.6;text-shadow:-2px 0 0 #000,2px 0 0 #000,0 -2px 0 #000,0 2px 0 #000,3px 3px 0 #000} /* contorno: fica legível sobre a loja */
 /* acento agudo desenhado à mão: o É maiúsculo da fonte pixel sai parecendo minúsculo */
 .ac{position:relative}.ac::after{content:'';position:absolute;left:35%;top:-.32em;width:.34em;height:.14em;background:currentColor;
   transform:skewY(-30deg);box-shadow:.1em .1em 0 #2f5f9e,.2em .2em 0 #000}
@@ -53,7 +53,11 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 /* botões de movimento na faixa de terra de baixo: ◀ ▶ à esquerda, pular à direita */
 #pad{position:absolute;left:0;right:0;bottom:0;height:20%;z-index:2;display:none;align-items:center;justify-content:space-between;
   padding:0 7% calc(env(safe-area-inset-bottom)*.5)}
-#pad.on{display:flex}#pad .grp{display:flex;gap:6%;width:44%}
+#pad.on{display:flex}
+/* botão da tela final: mesma faixa (e mesma altura) dos botões de controle */
+#endbar{position:absolute;left:0;right:0;bottom:0;height:20%;z-index:6;display:none;align-items:center;justify-content:center;
+  padding:0 7% calc(env(safe-area-inset-bottom)*.5)}
+#endbar.on{display:flex}#pad .grp{display:flex;gap:6%;width:44%}
 #pad button{flex:none;width:19vw;max-width:76px;min-width:56px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
   background:#4f86c6;border:3px solid #fff;box-shadow:4px 4px 0 #000;touch-action:none;cursor:pointer;padding:0}
 #pad .grp button{width:auto;flex:1;max-width:76px}
@@ -78,7 +82,8 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 </head>
 <body>
 <div id="wrap"><canvas id="c"></canvas><div id="tut" aria-live="polite"></div>
-<div id="pad"><div class="grp"><button data-k="left" aria-label="Andar para a esquerda"><svg viewBox="0 0 7 7"><path d="M1 3h1V2h1V1h1V0h1v7H4V6H3V5H2V4H1z"/></svg></button><button data-k="right" aria-label="Andar para a direita"><svg viewBox="0 0 7 7"><path d="M6 3H5V2H4V1H3V0H2v7h1V6h1V5h1V4h1z"/></svg></button></div><button data-k="jump" aria-label="Pular"><svg viewBox="0 0 7 7"><path d="M3 0h1v1h1v1h1v1h1v1H5v3H2V4H0V3h1V2h1V1h1z"/></svg></button></div></div>
+<div id="pad"><div class="grp"><button data-k="left" aria-label="Andar para a esquerda"><svg viewBox="0 0 7 7"><path d="M1 3h1V2h1V1h1V0h1v7H4V6H3V5H2V4H1z"/></svg></button><button data-k="right" aria-label="Andar para a direita"><svg viewBox="0 0 7 7"><path d="M6 3H5V2H4V1H3V0H2v7h1V6h1V5h1V4h1z"/></svg></button></div><button data-k="jump" aria-label="Pular"><svg viewBox="0 0 7 7"><path d="M3 0h1v1h1v1h1v1h1v1H5v3H2V4H0V3h1V2h1V1h1z"/></svg></button></div>
+<div id="endbar"></div></div>
 <div id="overlay"></div>
 <script>
 (()=>{
@@ -676,7 +681,7 @@ const FONT={G:[".11","1..","1.1","1.1",".11"],U:["1.1","1.1","1.1","1.1","111"],
   '&':[".1.","1.1",".11","1.1",".11"],'.':["...","...","...","...",".1."]};
 function ptext(x,s,px,py,col,k=1){x.fillStyle=col;[...s].forEach((ch,i)=>{const f=FONT[ch];if(f)f.forEach((r,j)=>{for(let q=0;q<3;q++)if(r[q]==='1')x.fillRect(px+(i*4+q)*k,py+j*k,k,k)})})}
 /* ---- fim da fase: a cafeteria Guido Café & Co. e os dois baristas na porta ---- */
-const SHOP_W=232,SHOP_H=228,DOOR_DX=156;
+const SHOP_W=232,SHOP_H=228,DOOR_DX=156,SHOP_S=1.5; // SHOP_S: escala da loja para ficar na proporção dos personagens
 // fonte serifada 5x7 para o letreiro
 const SERIF={G:[".1111","1....","1....","1..11","1...1","1...1",".111."],U:["11.11","1...1","1...1","1...1","1...1","1...1",".111."],
   I:[".111.","..1..","..1..","..1..","..1..","..1..",".111."],D:["1111.",".1..1",".1..1",".1..1",".1..1",".1..1","1111."],
@@ -726,7 +731,14 @@ const SHOP=(()=>{const cv=newCv(SHOP_W,SHOP_H),x=cv.getContext('2d'),R=(c,a,b,w,
   R('#c9ccd2',dx0+15,182,2,12);R('#c9ccd2',dx0+21,182,2,12);
   // degrau / calçada
   R('#1d1d1b',0,223,SHOP_W,5);R('#b9bec6',1,224,SHOP_W-2,4);R('#d6dbe2',1,224,SHOP_W-2,1);
-  return cv})();
+  // só o térreo (fachada azul) aparece, ampliado; o letreiro é redesenhado depois em escala inteira para ficar nítido
+  const top=122,big=newCv(Math.round(SHOP_W*SHOP_S),Math.round((SHOP_H-top)*SHOP_S)),bx=big.getContext('2d');
+  bx.imageSmoothingEnabled=false;bx.drawImage(cv,0,top,SHOP_W,SHOP_H-top,0,0,big.width,big.height);
+  bx.fillStyle='#4f86c6';bx.fillRect(2,3,big.width-4,31);
+  const g2=Math.round(DOOR_DX*SHOP_S-(SHOP_X+DOOR_DX-(LW*T-240))+240/2-177/2),y2=9, // centro da tela com a câmera parada no fim (VW=240)
+    sign=(dx,dy,c)=>{stext(bx,'GUIDO',g2+dx,y2+dy,3,c);
+    ptext(bx,'CAF',g2+99+dx,y2+11+dy,c,2);ptext(bx,'E',g2+123+dx,y2+11+dy,c,2);bx.fillRect(g2+127+dx,y2+7+dy,2,2);ptext(bx,'& CO.',g2+139+dx,y2+11+dy,c,2)};
+  sign(2,2,'#2f5f9e');sign(0,0,'#ffffff');return big})();
 
 /* baristas (desenhados em meia resolução e dobrados com EPX, contorno de 1px como o Guido) */
 function outline1(src){const w=src.width,h=src.height,d=src.getContext('2d').getImageData(0,0,w,h).data,o=newCv(w,h),x=o.getContext('2d');
@@ -760,13 +772,13 @@ const BARISTA1=barista(B1HEAD,B1X,B1P),BARISTA1_HAPPY=barista(happy(B1HEAD,{7:".
 // 2) cabelo curto cacheado, óculos pretos, camiseta preta, relógio e porta-filtro
 const B2HEAD=[
   "","",".........hHhHhH","........HHHHHHHH",".......HHhHHHhHHH",".......HHHHHHHHHH",".......HSSSSSSSSH",
-  ".......SSHHSSHHSS",".......SSwQSSQwSS",".......SSSSSSSSSS",".......cSSSccSSSc","........SSSccSSS","........SSSuuSSS",
-  "........cSSSSSSc",".........cSSSSc","..........cccc"],
+  ".......SSHHSSHHSS",".......SSwQSSQwSS",".......SSSSSSSSSS",".......cSSSccSSSc",".......cSSSccSSSc","........SSSuuSSS",
+  ".........cSSSSc","..........cSSc","..........cSSc"],
   B2X=g=>{g(["EM"],19,27);g([".....mMMMm","EEE..MMMMM",".....mMMm.","......mm.."],0,28)},
   B2P={H:'#2a1b14',h:'#4a3328',S:'#a0673f',c:'#7f4c2c',E:'#1d1d1b',L:'#cfe6f5',w:'#ffffff',Q:'#1d1d1b',u:'#5a2e1e',T:'#36363b',t:'#26262a',A:'#a0673f',
    P:'#4b4f58',p:'#383b42',K:'#1d1d1b',W:'#e8e8e8',M:'#d0d4da',m:'#8d939c'};
 const BARISTA2=barista(B2HEAD,B2X,B2P),
-  BARISTA2_HAPPY=barista(happy(B2HEAD,{8:".......SSQQSSQQSS",12:"........SSuuuuSS",13:"........cSSuuSSc"}),B2X,B2P);
+  BARISTA2_HAPPY=barista(happy(B2HEAD,{8:".......SSQQSSQQSS",12:"........SSuuuuSS",13:".........cSuuSc"}),B2X,B2P);
 /* fonte pixel 5x8 (com descendente) só para os balões de fala — nítida no canvas ampliado */
 const LFONT={Q:[".111.","1...1","1...1","1...1","1.1.1","1..1.",".11.1"],u:["","","1...1","1...1","1...1","1..11",".11.1"],
   e:["","",".111.","1...1","11111","1....",".111."],r:["","","1.11.","11..1","1....","1....","1...."],
@@ -781,17 +793,19 @@ const lw=t=>[...t].reduce((w,ch,i)=>w+(ch===' '?3:Math.max(...LFONT[ch].map(r=>r
 function ltext(t,px,py){let x0=px;for(const ch of t){if(ch===' '){x0+=4;continue}const g=LFONT[ch],w=Math.max(...g.map(r=>r.length));
   g.forEach((r,j)=>{for(let q=0;q<r.length;q++)if(r[q]==='1')ctx.fillRect(x0+q,py+j,1,1)});x0+=w+1}}
 /* balão de fala em pixel art; t = quadros desde que apareceu (o balão "estoura" para dentro) */
-function bubble(lines,cxp,bottom,tailX,t){
+function bubble(lines,cxp,bottom,tailX,t,side){ // side: rabinho na lateral direita (tailX vira a altura dele)
   if(t<0)return;const k=Math.min(1,t/8),s=k<1?0.4+k*0.8-(k>0.75?(k-0.75)*0.8:0):1;
   ctx.save();
   const w=Math.max(...lines.map(lw))+10,h=lines.length*10+6;
   const x=Math.round(Math.max(3,Math.min(VW-3-w,cxp-w/2))),y=Math.round(bottom-h); // não deixa o balão sair da tela
-  tailX=Math.max(x+5,Math.min(x+w-8,tailX));
-  ctx.translate(tailX,bottom+5);ctx.scale(s,s);ctx.translate(-tailX,-bottom-5);
+  const ty=side?Math.max(y+4,Math.min(y+h-7,tailX)):0;if(!side)tailX=Math.max(x+5,Math.min(x+w-8,tailX));
+  const ox=side?x+w+5:tailX,oy=side?ty+1:bottom+5;ctx.translate(ox,oy);ctx.scale(s,s);ctx.translate(-ox,-oy);
   const box=(c,d)=>{ctx.fillStyle=c;ctx.fillRect(x+2-d,y-d,w-4+2*d,h+2*d);ctx.fillRect(x-d,y+2-d,w+2*d,h-4+2*d);ctx.fillRect(x+1-d,y+1-d,w-2+2*d,h-2+2*d)};
   box('#1d1d1b',1);box('#ffffff',0);
-  ctx.fillStyle='#1d1d1b';for(let i=0;i<5;i++)ctx.fillRect(tailX-2+Math.floor(i/2),bottom+i,6-i,1); // rabinho
-  ctx.fillStyle='#ffffff';for(let i=0;i<4;i++)ctx.fillRect(tailX-1+Math.floor(i/2),bottom-1+i,4-i,1);
+  if(side){const r=x+w;ctx.fillStyle='#1d1d1b';for(let i=0;i<5;i++)ctx.fillRect(r+i,ty-2+Math.floor(i/2),1,6-i); // rabinho para a direita
+    ctx.fillStyle='#ffffff';for(let i=0;i<4;i++)ctx.fillRect(r-1+i,ty-1+Math.floor(i/2),1,4-i)}
+  else{ctx.fillStyle='#1d1d1b';for(let i=0;i<5;i++)ctx.fillRect(tailX-2+Math.floor(i/2),bottom+i,6-i,1); // rabinho
+    ctx.fillStyle='#ffffff';for(let i=0;i<4;i++)ctx.fillRect(tailX-1+Math.floor(i/2),bottom-1+i,4-i,1)}
   ctx.fillStyle='#d3d7df';ctx.fillRect(x+1,y+h-2,w-2,1);
   ctx.fillStyle='#1d1d1b';lines.forEach((l,i)=>ltext(l,x+5,y+3+i*10));ctx.restore()}
 const HEART=[".11.11.","1111111","1111111",".11111.","..111..","...1..."];
@@ -804,8 +818,12 @@ function hill(x,baseY,r,col){
 }
 function cloud(x,y){ctx.fillStyle='#fff';ctx.fillRect(x+12,y-9,21,9);ctx.fillRect(x+3,y,51,12);ctx.fillRect(x+30,y-5,15,6);
   ctx.fillStyle='#dcefff';ctx.fillRect(x+3,y+9,51,3)}
+let titleBox=null,cloudFade=0; // área do "PARABÉNS" (coordenadas do mundo): nuvens atrás dele somem suavemente
 function drawBG(cx){
-  const cw=620;for(const [x0,y] of CLOUDS){const x=((x0-cx*0.12)%cw+cw)%cw-80;cloud(Math.round(x),y);if(x+cw<VW)cloud(Math.round(x+cw),y)}
+  if(titleBox)cloudFade=Math.min(1,cloudFade+0.06);else cloudFade=0;
+  const cw=620,cloudAt=(x,y)=>{const hit=titleBox&&x+54>titleBox.x0&&x+3<titleBox.x1&&y+12>titleBox.y0&&y-9<titleBox.y1;
+    if(hit){if(cloudFade>=1)return;ctx.globalAlpha=1-cloudFade}cloud(Math.round(x),y);ctx.globalAlpha=1};
+  for(const [x0,y] of CLOUDS){const x=((x0-cx*0.12)%cw+cw)%cw-80;cloudAt(x,y);if(x+cw<VW)cloudAt(x+cw,y)}
   const p1=cx*0.25,h1=[[90,105],[340,72],[540,120]];
   for(let k=Math.floor(p1/720)-1;k<=Math.floor((p1+VW)/720)+1;k++)for(const [hx,r] of h1)hill(hx+k*720-p1,13*T-r*0.55+8,r,'#a9dd93');
   const p2=cx*0.5,h2=[[60,42],[225,30],[450,51],[600,33]];
@@ -845,21 +863,17 @@ function drawProps(cx){
     ctx.fillStyle='#2f5f9e';ctx.fillRect(px-30,fy+18,30,3);ptext(ctx,'G',px-19,fy+5,'#fff',2);
     ctx.fillStyle='#5e3517';ctx.fillRect(px-10,13*T-12,24,12);ctx.fillStyle='#c7883f';ctx.fillRect(px-9,13*T-11,22,10);
   }
-  const sx=SHOP_X-cx,sy=13*T-SHOP_H;
-  if(sx>-SHOP_W-60&&sx<VW+10){ctx.drawImage(SHOP,sx,sy);
-    for(let k=0;k<4;k++){const a=k*58+2; // varal de lampadinhas sob o beiral
-      for(let i=0;i<=58;i++){const yy=sy+11+Math.round(Math.sin(i/58*Math.PI)*6);ctx.fillStyle='#3b3b36';ctx.fillRect(sx+a+i,yy,1,1);
-        if(i%8===4){const on=((frame>>4)+k*3+i)%7!==0;ctx.fillStyle=on?'#ffe38a':'#c9a24a';ctx.fillRect(sx+a+i-1,yy+1,3,3);
-          if(on){ctx.globalAlpha=0.25;ctx.fillRect(sx+a+i-2,yy,5,5);ctx.globalAlpha=1}}}}
+  const dsx=SHOP_X+DOOR_DX-cx,sx=Math.round(dsx-DOOR_DX*SHOP_S),sy=13*T-SHOP.height; // a porta fica no mesmo lugar; a loja cresce em volta
+  if(sx>-SHOP.width-60&&sx<VW+10){ctx.drawImage(SHOP,sx,sy);
     const party=state==='win'&&winPhase===2,cheer=state==='win'&&cheerT>=0;
-    const b1x=sx+100-27,b2x=sx+210-27,b1y=13*T-82,b2y=b1y; // felizes (olhinhos fechados) quando veem o Guido
+    const b1x=dsx-83,b2x=dsx+27,b1y=13*T-82,b2y=b1y; // felizes (olhinhos fechados) quando veem o Guido
     ctx.drawImage(cheer?BARISTA1_HAPPY:BARISTA1,b1x,b1y);ctx.drawImage(cheer?BARISTA2_HAPPY:BARISTA2,b2x,b2y);
     ctx.fillStyle='#ffffff'; // vapor saindo do bico da chaleira
     for(let i=0;i<3;i++){const ph=(frame*0.35+i*6)%18;ctx.globalAlpha=Math.max(0,1-ph/18)*0.85;
       ctx.fillRect(b1x+57+Math.round(Math.sin((frame+i*25)/10)*1.5),Math.round(b1y+57-ph),1,2)}
     ctx.globalAlpha=1;
     if(party)for(let i=0;i<3;i++){const t=(winT+i*22)%66;heart(Math.round(SHOP_X+DOOR_DX-cx-3+Math.sin((winT+i*30)/9)*8+(i-1)*10),Math.round(13*T-56-t*0.6),Math.min(1,(66-t)/20))}
-    if(cheer){bubble(['Quer um','passadinho?'],b1x+30,b1y-2,b1x+34,cheerT-6);bubble(['Vem Guido!'],b2x+30,b2y+4,b2x+32,cheerT-30)}
+    if(party){const q=['Quer um','passadinho?'];bubble(q,b1x+16-(Math.max(...q.map(lw))+10)/2,b1y+33,b1y+21,winT-6,true);bubble(['Vem Guido!'],b2x+30,b2y+4,b2x+32,winT-30)} // balões só depois que o Guido para na porta
   }
 }
 function drawBeans(cx){
@@ -1023,8 +1037,9 @@ function drawHUD(){
 /* ================= TELAS ================= */
 const ov=document.getElementById('overlay');
 const pad2=(n,l)=>String(n).padStart(l,'0');
-function hideOverlay(){ov.classList.add('hidden');ov.classList.remove('menu','win');ov.innerHTML=''}
-function show(html,act=newGame){ov.innerHTML=html;ov.classList.remove('hidden','menu','win');
+const endbar=document.getElementById('endbar');
+function hideOverlay(){titleBox=null;ov.classList.add('hidden');ov.classList.remove('menu','win');ov.innerHTML='';ov.style.bottom='';endbar.className='';endbar.innerHTML=''}
+function show(html,act=newGame){titleBox=null;ov.innerHTML=html;ov.classList.remove('hidden','menu','win');ov.style.bottom='';endbar.className='';endbar.innerHTML='';
   const b=ov.querySelector('.play');if(b)b.addEventListener('click',e=>{e.stopPropagation();unlockAudio();act()})}
 function goTitle(){ // volta para a tela inicial
   buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(2);P.still=30;particles=[];pops=[];lost=[];bumps.clear();
@@ -1042,10 +1057,19 @@ function showTitle(){
     px.globalAlpha=1;i++;requestAnimationFrame(anim)})();
 }
 function showOver(){show(`<div class="title" style="font-size:22px">FIM DE JOGO</div><div class="sub keep">${beanCount} grãos · ${pad2(score,6)} pontos</div><button class="play low">JOGAR NOVAMENTE</button>`)}
+function placeWin(){ // a área do título vai do topo da tela até o topo da cafeteria, e ele fica no meio dela
+  if(!ov.classList.contains('win'))return;const r=c.getBoundingClientRect(),k=r.height/VH;
+  ov.style.bottom=Math.max(0,innerHeight-(r.top+(OYW+13*T-SHOP.height)*k))+'px';
+  const b=[...ov.children].map(e=>e.getBoundingClientRect()),m=6; // caixa do título + subtítulo, com folga
+  titleBox={x0:(Math.min(...b.map(q=>q.left))-r.left)/k-m,x1:(Math.max(...b.map(q=>q.right))-r.left)/k+m,
+    y0:(Math.min(...b.map(q=>q.top))-r.top)/k-OYW-m,y1:(Math.max(...b.map(q=>q.bottom))-r.top)/k-OYW+m}}
+addEventListener('resize',()=>requestAnimationFrame(placeWin));
 function showWin(){
   try{if(score>(+localStorage.getItem('guido_best')||0))localStorage.setItem('guido_best',score)}catch(e){}
-  show(`<div class="title" aria-label="PARABÉNS">PARAB<span class="ac">E</span>NS</div><div class="big">Agora a Guido tem café!</div><button class="play low">JOGAR NOVAMENTE</button>`,goTitle);
-  ov.classList.add('win')}
+  show(`<div class="title" aria-label="PARABÉNS">PARAB<span class="ac">E</span>NS</div><div class="big">Agora a Guido tem café!</div>`);
+  ov.classList.add('win');placeWin();
+  endbar.innerHTML='<button class="play">JOGAR NOVAMENTE</button>';endbar.className='on';
+  endbar.querySelector('.play').addEventListener('click',e=>{e.stopPropagation();unlockAudio();goTitle()})}
 
 /* ================= TUTORIAL =================
    Logo depois da tela inicial, um passo só: andar com ◀ ▶ e pular com ▲. Some no primeiro toque.
