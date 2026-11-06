@@ -542,7 +542,7 @@ function sfx(type){
 const input={left:false,right:false,jump:false,jumpPressed:false};
 let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,checkK=0,winPhase=0,cheerT=-1;
 const PW=22,PH=38;
-function newPlayer(tx){return{x:tx*T,y:13*T-PH,w:PW,h:PH,vx:0,vy:0,face:1,onGround:false,coyote:0,buf:0,runT:0,still:0,dead:false,inv:0}}
+function newPlayer(tx){return{x:tx*T,y:13*T-PH,w:PW,h:PH,vx:0,vy:0,face:1,onGround:false,coyote:0,buf:0,air2:true,runT:0,still:0,dead:false,inv:0}}
 function newGame(){const fromTitle=state==='title';buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);particles=[];pops=[];lost=[];bumps.clear();
   flagY=0;checkK=0;winPhase=0;cheerT=-1;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
 function respawn(){P=newPlayer(checkpoint);P.inv=90;state='play';
@@ -606,7 +606,9 @@ function updatePlayer(){
   }else{const f=P.onGround?0.24:0.06;P.vx=Math.abs(P.vx)<=f?0:P.vx-Math.sign(P.vx)*f}
   if(input.jumpPressed){P.buf=8;input.jumpPressed=false}
   P.coyote=P.onGround?6:P.coyote-1;
+  if(P.onGround)P.air2=true; // pulo duplo recarrega ao tocar o chão
   if(P.buf>0&&P.coyote>0){P.vy=-9.6;P.coyote=0;P.buf=0;P.onGround=false;sfx('jump');dust(P.x+P.w/2,P.y+P.h,3)}
+  else if(P.buf>0&&P.air2){P.vy=-8.4;P.buf=0;P.air2=false;sfx('jump');sparkle(P.x+P.w/2,P.y+P.h)} // pulo duplo no ar
   P.buf--;
   P.vy=Math.min(P.vy+((P.vy<0&&input.jump)?0.42:0.95),9);
   moveX(P);
@@ -623,7 +625,7 @@ function updatePlayer(){
     if(P.x+2<e.x+e.w&&P.x+P.w-2>e.x&&P.y+6<e.y+e.h&&P.y+P.h>e.y){
       // pulou bem em cima de um cubo de açúcar: amassa ele e quica (a montanha não morre)
       if(e.type==='sugar'&&vyBefore>0&&prevBottom<=e.y+8){
-        e.dead=1;e.vx=0;score+=100;sfx('stomp');P.vy=input.jump?-8:-5;P.onGround=false;
+        e.dead=1;e.vx=0;score+=100;sfx('stomp');P.vy=input.jump?-8:-5;P.onGround=false;P.air2=true;
         for(let i=0;i<6;i++)particles.push({x:e.x+e.w/2,y:e.y+e.h-4,vx:(Math.random()-.5)*2.4,vy:-Math.random()*1.5,life:18,col:'#ffffff',s:2});
         continue}
       if(P.inv<=0)dropBeans(e);
@@ -1092,7 +1094,7 @@ function endTut(){tut=null;tutEl.className='';tutEl.innerHTML=''}
 function tutTick(){if(input.left||input.right||input.jump)endTut()} // sumiu assim que o jogador usou um comando
 
 /* ================= CONTROLES =================
-   Botões na faixa de baixo: ◀ ▶ andam, ▲ pula (segurar = pulo mais alto).
+   Botões na faixa de baixo: ◀ ▶ andam, ▲ pula (segurar = pulo mais alto; aperte de novo no ar = pulo duplo).
    Teclado: setas/A/D para andar, espaço/↑/W para pular. */
 const pad=document.getElementById('pad'),btnOf=new Map(); // pointerId → botão pressionado
 function resetInput(){input.left=input.right=input.jump=input.jumpPressed=false;btnOf.clear();pad.querySelectorAll('.dn').forEach(b=>b.classList.remove('dn'))}
