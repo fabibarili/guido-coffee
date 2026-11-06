@@ -543,7 +543,7 @@ const input={left:false,right:false,jump:false,jumpPressed:false};
 let state='title',P,score=0,beanCount=0,lives=3,cam=0,frame=0,particles=[],pops=[],lost=[],bumps=new Map(),deadT=0,winT=0,flagY=0,checkK=0,winPhase=0,cheerT=-1;
 const PW=22,PH=38;
 function newPlayer(tx){return{x:tx*T,y:13*T-PH,w:PW,h:PH,vx:0,vy:0,face:1,onGround:false,coyote:0,buf:0,air2:true,runT:0,still:0,dead:false,inv:0}}
-function newGame(){const fromTitle=state==='title';buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);particles=[];pops=[];lost=[];bumps.clear();
+function newGame(){const fromTitle=state==='title';buildLevel();score=0;beanCount=0;lives=3;checkpoint=2;P=newPlayer(checkpoint);P.sipping=true;P.sipT=0;particles=[];pops=[];lost=[];bumps.clear();
   flagY=0;checkK=0;winPhase=0;cheerT=-1;cam=0;state='play';resetInput();hideOverlay();sfx('woof');if(fromTitle)startTut();else endTut()}
 function respawn(){P=newPlayer(checkpoint);P.inv=90;state='play';
   enemies.forEach(e=>{if(!e.dead&&Math.abs(e.x-P.x)<6*T)e.x=P.x+9*T})}
@@ -596,6 +596,8 @@ function updatePlayer(){
     else{P.vy+=0.35;P.y+=P.vy}
     if(deadT>(P.coffee?170:110)){lives--;if(lives<=0){state='over';showOver()}else respawn()}return}
   if(P.inv>0)P.inv--;
+  // começo da fase: sentado tomando café até o jogador usar algum comando
+  if(P.sipping){if(input.left||input.right||input.jump||input.jumpPressed)P.sipping=false;else P.sipT++}
   const dir=(input.right?1:0)-(input.left?1:0);
   const max=2.8;
   if(dir){
@@ -917,11 +919,13 @@ function dogFrame(){
 const SIP_BASE=(()=>{const d=DOG_SIP.hold[0].getContext('2d').getImageData(0,0,CW,CH).data;
   for(let y=CH-1;y>=0;y--)for(let x=0;x<CW;x++)if(d[(y*CW+x)*4+3]>0)return y+1;return CH})();
 function drawPlayer(cx){
-  if(state==='win'&&winPhase===2){ // sentado na porta da cafeteria tomando café: segura o copo (vapor) e dá goles
-    const t=winT%150,sip=t>=90&&t<135,set=sip?DOG_SIP.sip:DOG_SIP.hold,x=Math.round(P.x+P.w/2-CW/2-cx),y=Math.round(P.y+P.h-SIP_BASE);
-    ctx.drawImage(set[Math.floor(winT/16)%2],x,y);
-    if(!sip){ctx.fillStyle='#fff';for(let s=0;s<2;s++)for(let k=0;k<3;k++){const ph=(winT*0.12+k*3+s*1.5)%9;ctx.globalAlpha=Math.max(0,1-ph/9)*0.9;
-      ctx.fillRect(x+39+s*3+Math.round(Math.sin((winT+k*20+s*35)/14)),Math.round(y+13-ph),1,1)}ctx.globalAlpha=1}
+  // sentado tomando café (começo da fase e porta da cafeteria): segura o copo (vapor) e dá goles
+  const sipping=state==='play'&&P.sipping&&!P.dead;
+  if((state==='win'&&winPhase===2)||sipping){
+    const T0=sipping?P.sipT:winT,t=T0%150,sip=t>=90&&t<135,set=sip?DOG_SIP.sip:DOG_SIP.hold,x=Math.round(P.x+P.w/2-CW/2-cx),y=Math.round(P.y+P.h-SIP_BASE);
+    ctx.drawImage(set[Math.floor(T0/16)%2],x,y);
+    if(!sip){ctx.fillStyle='#fff';for(let s=0;s<2;s++)for(let k=0;k<3;k++){const ph=(T0*0.12+k*3+s*1.5)%9;ctx.globalAlpha=Math.max(0,1-ph/9)*0.9;
+      ctx.fillRect(x+39+s*3+Math.round(Math.sin((T0+k*20+s*35)/14)),Math.round(y+13-ph),1,1)}ctx.globalAlpha=1}
     return}
   const fr=dogFrame(),img=fr[P.face>0?0:1];
   if(P.inv>0&&(P.inv>>2)%2)return;
