@@ -30,7 +30,6 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 #prev{width:192px;height:208px;image-rendering:pixelated}
 #overlay.menu{justify-content:flex-start;padding-top:max(9vh,env(safe-area-inset-top))}
 #overlay.menu .title{font-size:clamp(46px,15vw,72px);letter-spacing:4px;text-shadow:4px 4px 0 #2f5f9e,8px 8px 0 #000}
-#overlay.menu #prev{margin-top:auto}
 /* letreiro da cafeteria em pixel art (logo Guido Café & Co.) — --p = tamanho de 1 pixel do letreiro */
 .sign{position:relative;margin-top:2vh;--p:4px;transform-origin:50% -30vh;animation:swing 3.6s ease-in-out infinite}
 @keyframes swing{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg)}}
@@ -40,7 +39,10 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   background:repeating-linear-gradient(to top,#cfd6e2 0 calc(var(--p)*2),#7d8798 0 calc(var(--p)*3),#1d1d1b 0 calc(var(--p)*4))}
 .sign::before{left:calc(var(--p)*11)}.sign::after{right:calc(var(--p)*11)}
 #overlay.menu{background:rgba(0,0,0,.95)}
-#overlay.menu .play{margin:24px 0 auto;position:relative;top:12vh} /* ~20% mais para baixo */
+/* posições definidas no Figma (tela de 390x844): Guido do menu em 37,4% da altura, botões em 74,8% */
+#overlay.menu #prev{position:absolute;top:37.4%;left:0;right:0;margin:0 auto}
+#overlay .play.low{position:absolute;top:74.8%;left:0;right:0;margin:0 auto;width:fit-content}
+.sub.keep{margin-bottom:59px} /* ocupa o lugar do botão para o título não descer */
 #tdot{position:absolute;display:none;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
   border:3px solid rgba(255,255,255,.9);background:rgba(255,255,255,.25);box-shadow:0 0 0 2px rgba(0,0,0,.25);pointer-events:none}
 .ripple{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;
@@ -972,7 +974,7 @@ function hideOverlay(){ov.classList.add('hidden');ov.classList.remove('menu');ov
 function show(html){ov.innerHTML=html;ov.classList.remove('hidden','menu');
   const b=ov.querySelector('.play');if(b)b.addEventListener('click',e=>{e.stopPropagation();unlockAudio();newGame()})}
 function showTitle(){
-  show(`<div class="sign" role="img" aria-label="Guido Café &amp; Co."></div><canvas id="prev" width="${CW}" height="${CH}"></canvas><button class="play">JOGAR ▶</button>`);
+  show(`<div class="sign" role="img" aria-label="Guido Café &amp; Co."></div><canvas id="prev" width="${CW}" height="${CH}"></canvas><button class="play low">JOGAR ▶</button>`);
   ov.classList.add('menu');
   const sg=ov.querySelector('.sign'),sc=makeSign(),sp=Math.max(2,Math.min(6,Math.floor(Math.min(innerWidth*0.82,360)/sc.width)));
   sc.style.width=sc.width*sp+'px';sc.style.height=sc.height*sp+'px';sg.style.setProperty('--p',sp+'px');sg.appendChild(sc);
@@ -983,7 +985,7 @@ function showTitle(){
       px.fillRect(39+s*3+Math.round(Math.sin((i+k*20+s*35)/14)),Math.round(13-ph),1,1)}
     px.globalAlpha=1;i++;requestAnimationFrame(anim)})();
 }
-function showOver(){show(`<div class="title" style="font-size:22px">FIM DE JOGO</div><div class="sub">${beanCount} grãos · ${pad2(score,6)} pontos</div><button class="play">↻ JOGAR DE NOVO</button>`)}
+function showOver(){show(`<div class="title" style="font-size:22px">FIM DE JOGO</div><div class="sub keep">${beanCount} grãos · ${pad2(score,6)} pontos</div><button class="play low">JOGAR NOVAMENTE</button>`)}
 function showWin(){
   let best=score;try{best=+localStorage.getItem('guido_best')||0;if(score>best){localStorage.setItem('guido_best',score);best=score}}catch(e){best=score}
   show(`<div class="title" style="font-size:20px">AU AU!</div><div class="big">VOCÊ CHEGOU!</div>
