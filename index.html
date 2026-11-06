@@ -15,7 +15,7 @@ html,body{height:100%;background:#1b2a3a;overflow:hidden;overscroll-behavior:non
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
   font-family:'Press Start 2P',ui-monospace,monospace;color:#fff}
 body{display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh}
-#wrap{position:relative;overflow:hidden;background:#8fd3ff;flex:none;touch-action:none;cursor:grab}
+#wrap{position:relative;overflow:hidden;background:#8fd3ff;flex:none;touch-action:none}
 #c{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 #overlay{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:14px;background:rgba(15,25,40,.82);text-align:center;padding:16px;overflow:auto}
@@ -50,10 +50,16 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 #overlay.menu #prev{position:absolute;top:37.4%;left:0;right:0;margin:0 auto}
 #overlay .play.low{position:absolute;top:74.8%;left:0;right:0;margin:0 auto;width:fit-content}
 .sub.keep{margin-bottom:59px} /* ocupa o lugar do botão para o título não descer */
-#tdot{position:absolute;display:none;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
-  border:3px solid rgba(255,255,255,.9);background:rgba(255,255,255,.25);box-shadow:0 0 0 2px rgba(0,0,0,.25);pointer-events:none}
-.ripple{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;
-  pointer-events:none;animation:rip .45s ease-out forwards}
+/* botões de movimento na faixa de terra de baixo: ◀ ▶ à esquerda, pular à direita */
+#pad{position:absolute;left:0;right:0;bottom:0;height:20%;z-index:2;display:none;align-items:center;justify-content:space-between;
+  padding:0 7% calc(env(safe-area-inset-bottom)*.5)}
+#pad.on{display:flex}#pad .grp{display:flex;gap:6%;width:44%}
+#pad button{flex:none;width:19vw;max-width:76px;min-width:56px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.95);border:3px solid #fff;box-shadow:4px 4px 0 #000;touch-action:none;cursor:pointer;padding:0}
+#pad .grp button{width:auto;flex:1;max-width:76px}
+#pad button svg{width:46%;height:46%;image-rendering:pixelated;fill:#fff}
+#pad button.dn{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;background:rgba(40,40,40,.95)}
+#pad button.dn svg{fill:#ffe08a}
 /* tutorial de movimento (aparece depois da tela inicial) */
 #tut{position:absolute;left:50%;top:15%;transform:translateX(-50%);width:min(88%,330px);z-index:3;pointer-events:none;
   background:rgba(15,25,40,.88);border:3px solid #fff;box-shadow:4px 4px 0 #000;padding:12px 12px 14px;text-align:center;
@@ -63,19 +69,16 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 #tut .tx{font-size:8px;line-height:1.9;color:#fff}
 #tut .ok{font-size:12px;color:#8ff08a;text-shadow:2px 2px 0 #000;animation:okp .35s ease-out}
 @keyframes okp{from{transform:scale(.3)}to{transform:scale(1)}}
-#tut .demo{position:relative;width:120px;height:50px;border:2px dashed rgba(255,255,255,.35)}
-#tut .demo i{position:absolute;left:50%;top:60%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
-  border:2px solid #fff;background:rgba(255,255,255,.35)}
-#tut .walk i{animation:dwalk 2.4s ease-in-out infinite}
-@keyframes dwalk{0%,100%{left:20%}50%{left:80%}}
-#tut .jump i{animation:djump 1.4s ease-in-out infinite}
-@keyframes djump{0%,25%{top:80%}55%,100%{top:15%;opacity:1}}
-@media (prefers-reduced-motion:reduce){#tut .demo i{animation:none}}
-@keyframes rip{from{transform:scale(.4);opacity:.9}to{transform:scale(2.2);opacity:0}}
+#tut .keys{display:flex;gap:8px;align-items:flex-end}
+#tut .keys b{display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(0,0,0,.95);border:2px solid #fff}
+#tut .keys b svg{width:14px;height:14px;fill:#fff}#tut .keys b.ok{border-color:#8ff08a}#tut .keys b.ok svg{fill:#8ff08a}
+#tut .keys .gap{width:14px}#tut .keys span{display:block;font-size:6px;color:#ffe08a;margin-top:4px}
+#tut .keys div{display:flex;flex-direction:column;align-items:center}
 </style>
 </head>
 <body>
-<div id="wrap"><canvas id="c"></canvas><div id="tdot"></div><div id="tut" aria-live="polite"></div></div>
+<div id="wrap"><canvas id="c"></canvas><div id="tut" aria-live="polite"></div>
+<div id="pad"><div class="grp"><button data-k="left" aria-label="Andar para a esquerda"><svg viewBox="0 0 7 7"><path d="M1 3h1V2h1V1h1V0h1v7H4V6H3V5H2V4H1z"/></svg></button><button data-k="right" aria-label="Andar para a direita"><svg viewBox="0 0 7 7"><path d="M6 3H5V2H4V1H3V0H2v7h1V6h1V5h1V4h1z"/></svg></button></div><button data-k="jump" aria-label="Pular"><svg viewBox="0 0 7 7"><path d="M3 0h1v1h1v1h1v1h1v1H5v3H2V4H0V3h1V2h1V1h1z"/></svg></button></div></div>
 <div id="overlay"></div>
 <script>
 (()=>{
@@ -587,8 +590,7 @@ function updatePlayer(){
     else{P.vy+=0.35;P.y+=P.vy}
     if(deadT>(P.coffee?170:110)){lives--;if(lives<=0){state='over';showOver()}else respawn()}return}
   if(P.inv>0)P.inv--;
-  let dir=(input.right?1:0)-(input.left?1:0);
-  if(input.hold){const d=cam+input.tsx-(P.x+P.w/2);dir=Math.abs(d)>10?Math.sign(d):0} // segue o dedo
+  const dir=(input.right?1:0)-(input.left?1:0);
   const max=2.8;
   if(dir){
     const turning=Math.sign(P.vx)===-dir&&Math.abs(P.vx)>0.3;
@@ -1000,6 +1002,7 @@ function render(){
   for(const p of particles){ctx.globalAlpha=Math.min(1,p.life/10);ctx.fillStyle=p.col;ctx.fillRect(Math.round(p.x-cx),Math.round(p.y),p.s,p.s)}
   ctx.globalAlpha=1;drawBubble(cx);ctx.restore();
   if(state!=='title')drawHUD();
+  const po=state==='play';if(pad.classList.contains('on')!==po){pad.classList.toggle('on',po);if(!po)resetInput()}
 }
 /* ---- contador de grãos no topo da tela ---- */
 let hudLast=0,hudPop=0,hudLost=0;
@@ -1045,66 +1048,45 @@ function showWin(){
   ov.classList.add('win')}
 
 /* ================= TUTORIAL =================
-   Logo depois da tela inicial: ensina a andar (pressionar e arrastar para os lados) e a pular (arrastar para cima).
+   Logo depois da tela inicial, um passo só: andar com ◀ ▶ e pular com ▲.
    Os inimigos ficam parados até o tutorial acabar. */
 const tutEl=document.getElementById('tut');let tut=null;
-const TUT_STEPS=[
-  {id:'walk',t:'ANDAR',tx:'Pressione a tela e arraste para os lados: o Guido corre atrás do seu dedo.',
-   done:t=>t.dist>4*T},
-  {id:'jump',t:'PULAR',tx:'Arraste o dedo para cima para pular.',
-   done:t=>t.jumps>t.j0},
-];
-function startTut(){tut={i:-1,dist:0,jumps:0,j0:0,okT:0};nextTut()}
+const ICO=k=>document.querySelector(`#pad [data-k="${k}"] svg`).outerHTML;
+function startTut(){tut={dist:0,jumps:0,okT:0,endT:0};
+  tutEl.innerHTML='<div class="tt">CONTROLES</div><div class="keys">'+
+    `<div><b data-t="walk">${ICO('left')}</b></div><div><b data-t="walk">${ICO('right')}</b></div><div class="gap"></div><div><b data-t="jump">${ICO('jump')}</b></div></div>`+
+    '<div class="tx">Use as setas para andar e o botão de cima para pular. Pegue os grãos e chegue à cafeteria!</div>';
+  tutEl.className='on'}
 function endTut(){tut=null;tutEl.className='';tutEl.innerHTML=''}
-function nextTut(){
-  tut.i++;const s=TUT_STEPS[tut.i];
-  tut.j0=tut.jumps;tut.okT=0;
-  if(!s){tutEl.innerHTML='<div class="tt">PRONTO!</div><div class="tx">Pegue os grãos de café e chegue à cafeteria!</div>';
-    tutEl.className='on';tut.endT=150;return}
-  tutEl.innerHTML=`<div class="tt">${s.t}</div>`+
-    `<div class="demo ${s.id}"><i></i></div><div class="tx">${s.tx}</div>`;
-  tutEl.className='on';
-}
 function tutTick(){
   if(tut.endT){if(--tut.endT===20)tutEl.classList.add('fade');if(tut.endT<=0)endTut();return}
-  if(tut.okT){if(--tut.okT<=0)nextTut();return}
   if(P.dead)return;
   tut.dist+=Math.abs(P.vx);
-  const s=TUT_STEPS[tut.i];
-  if(s&&s.done(tut)){tut.okT=50;sfx('bean');tutEl.querySelector('.tx').outerHTML='<div class="ok">MUITO BEM!</div>';
-    const d=tutEl.querySelector('.demo');if(d)d.remove()}
+  const walk=tut.dist>3*T,jump=tut.jumps>0;
+  tutEl.querySelectorAll('[data-t="walk"]').forEach(b=>b.classList.toggle('ok',walk));
+  tutEl.querySelectorAll('[data-t="jump"]').forEach(b=>b.classList.toggle('ok',jump));
+  if(walk&&jump){tut.endT=90;sfx('bean');tutEl.querySelector('.tx').outerHTML='<div class="ok">MUITO BEM!</div>'}
 }
 
-/* ================= CONTROLES (estilo Flappy Bird) =================
-   Com o dedo na tela, o Guido corre na direção do dedo e para embaixo dele.
-   Arrastar o dedo para cima = pula (manter lá em cima = pulo mais alto).
-   Para pular de novo, desça um pouco o dedo e arraste para cima outra vez. Teclado: setas para andar, espaço/↑/W para pular. */
-const tdot=document.getElementById('tdot');const ptrs=new Set();const sw={id:null,ay:0,minY:0,armed:true};
-function resetInput(){input.left=input.right=input.jump=input.jumpPressed=input.hold=false;ptrs.clear();sw.id=null;tdot.style.display='none'}
+/* ================= CONTROLES =================
+   Botões na faixa de baixo: ◀ ▶ andam, ▲ pula (segurar = pulo mais alto).
+   Teclado: setas/A/D para andar, espaço/↑/W para pular. */
+const pad=document.getElementById('pad'),btnOf=new Map(); // pointerId → botão pressionado
+function resetInput(){input.left=input.right=input.jump=input.jumpPressed=false;btnOf.clear();pad.querySelectorAll('.dn').forEach(b=>b.classList.remove('dn'))}
 function tap(){input.jumpPressed=true;input.jump=true}
-function ripple(x,y){const r=wrap.getBoundingClientRect(),d=document.createElement('div');d.className='ripple';
-  d.style.left=(x-r.left)+'px';d.style.top=(y-r.top)+'px';wrap.appendChild(d);setTimeout(()=>d.remove(),500)}
-function moveDot(x,y){const r=wrap.getBoundingClientRect();input.tsx=(x-r.left)*VW/r.width;input.hold=true;tdot.style.left=(x-r.left)+'px';tdot.style.top=(y-r.top)+'px'}
-wrap.addEventListener('pointerdown',e=>{
-  e.preventDefault();unlockAudio();
-  if(state!=='play')return;
-  try{wrap.setPointerCapture(e.pointerId)}catch(_){}
-  ptrs.add(e.pointerId);if(sw.id===null)Object.assign(sw,{id:e.pointerId,ay:e.clientY,minY:e.clientY,armed:true});ripple(e.clientX,e.clientY);moveDot(e.clientX,e.clientY);tdot.style.display='block';
-});
-wrap.addEventListener('pointermove',e=>{
-  if(!ptrs.has(e.pointerId))return;moveDot(e.clientX,e.clientY);
-  if(e.pointerId!==sw.id)return;
-  const u=Math.max(10,wrap.clientWidth/22),y=e.clientY;
-  if(sw.armed){
-    if(y>sw.ay)sw.ay=y;                                   // mede a partir do ponto mais baixo
-    if(sw.ay-y>u){tap();ripple(e.clientX,y);sw.armed=false;sw.minY=y}
-  }else{
-    if(y<sw.minY)sw.minY=y;
-    if(y-sw.minY>u*0.8){sw.armed=true;input.jump=false;sw.ay=y} // desceu o dedo: pronto para outro pulo
-  }
-});
-const endPtr=e=>{if(e.pointerId===sw.id)sw.id=null;if(ptrs.delete(e.pointerId)&&!ptrs.size){input.jump=false;input.hold=false;tdot.style.display='none'}};
-['pointerup','pointercancel','lostpointercapture'].forEach(ev=>wrap.addEventListener(ev,endPtr));
+function press(b,on){const k=b.dataset.k;b.classList.toggle('dn',on);
+  if(k==='jump'){if(on&&!input.jump)tap();else if(!on)input.jump=false}else input[k]=on}
+// o dedo pode deslizar de um botão para o outro sem levantar
+function ptrAt(e){const el=document.elementFromPoint(e.clientX,e.clientY);return el&&el.closest('#pad button')}
+function ptrUpdate(e){const nb=state==='play'?ptrAt(e):null,ob=btnOf.get(e.pointerId);if(nb===ob)return;
+  if(ob){btnOf.delete(e.pointerId);if(![...btnOf.values()].includes(ob))press(ob,false)}
+  if(nb){btnOf.set(e.pointerId,nb);press(nb,true)}}
+pad.addEventListener('pointerdown',e=>{e.preventDefault();unlockAudio();try{pad.setPointerCapture(e.pointerId)}catch(_){}ptrUpdate(e)});
+pad.addEventListener('pointermove',e=>{if(btnOf.has(e.pointerId)||e.buttons)ptrUpdate(e)});
+const endPtr=e=>{const ob=btnOf.get(e.pointerId);btnOf.delete(e.pointerId);if(ob&&![...btnOf.values()].includes(ob))press(ob,false)};
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>pad.addEventListener(ev,endPtr));
+pad.addEventListener('contextmenu',e=>e.preventDefault());
+wrap.addEventListener('pointerdown',e=>{e.preventDefault();unlockAudio()});
 const KEYS_J=['Space','ArrowUp','KeyW','KeyZ','KeyK'];
 addEventListener('keydown',e=>{
   if(e.code==='ArrowLeft'||e.code==='KeyA')input.left=true;
