@@ -52,8 +52,7 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
   background:rgba(15,25,40,.88);border:3px solid #fff;box-shadow:4px 4px 0 #000;padding:12px 12px 14px;text-align:center;
   display:none;flex-direction:column;align-items:center;gap:9px;transition:opacity .25s}
 #tut.on{display:flex}#tut.fade{opacity:0}
-#tut .st{font-size:7px;color:#9fc3ee;letter-spacing:1px}
-#tut .tt{font-size:13px;color:#ffe08a;text-shadow:2px 2px 0 #000}
+#tut .tt{font-size:15.6px;color:#ffe08a;text-shadow:2px 2px 0 #000}
 #tut .tx{font-size:8px;line-height:1.9;color:#fff}
 #tut .ok{font-size:12px;color:#8ff08a;text-shadow:2px 2px 0 #000;animation:okp .35s ease-out}
 @keyframes okp{from{transform:scale(.3)}to{transform:scale(1)}}
@@ -906,17 +905,19 @@ const BFONT7={A:[".111.","1...1","1...1","11111","1...1","1...1","1...1"],C:[".1
   O:[".111.","1...1","1...1","1...1","1...1","1...1",".111."],U:["1...1","1...1","1...1","1...1","1...1","1...1",".111."],
   '!':["1","1","1","1","1",".","1"],' ':["...","..."],
   _m:{acute:[[3,-2],[2,-1]],tilde:[[1,-2],[2,-2],[4,-2],[0,-1],[3,-1]],ced:[[2,7],[2,8],[1,8]]}};
-const bw=(s,F=BFONT)=>[...s].reduce((w,ch)=>w+F[BMARK[ch]?BMARK[ch][0]:ch][0].length+1,0)-1;
+const bw=(s,F=BFONT)=>[...s].reduce((w,ch)=>w+F[BMARK[ch]?BMARK[ch][0]:ch][0].length+1+(F.bold?1:0),0)-1;
+const BFONT7B={...BFONT7,bold:1}; // mesma fonte 5x7, em negrito
 function btext(s,px,py,k,col,F=BFONT){ // py = topo da letra (acentos ficam 2 linhas acima)
   ctx.fillStyle=col;let x=px;
   for(const ch of s){const m=BMARK[ch],g=F[m?m[0]:ch];
-    g.forEach((r,j)=>{for(let q=0;q<r.length;q++)if(r[q]==='1')ctx.fillRect(x+q*k,py+j*k,k,k)});
-    if(m)F._m[m[1]].forEach(([a,b])=>ctx.fillRect(x+a*k,py+b*k,k,k));
-    x+=(g[0].length+1)*k}
+    const bk=F.bold?2*k:k; // negrito: cada pixel ganha +1 de largura
+    g.forEach((r,j)=>{for(let q=0;q<r.length;q++)if(r[q]==='1')ctx.fillRect(x+q*k,py+j*k,bk,k)});
+    if(m)F._m[m[1]].forEach(([a,b])=>ctx.fillRect(x+a*k,py+b*k,bk,k));
+    x+=(g[0].length+1+(F.bold?1:0))*k}
 }
 function drawBubble(cx){
   if(P.dead&&P.coffee&&deadT>=6)speech(Math.round(P.bx-cx),COFFEE_Y-44,deadT-6,'CAFÉ COM AÇÚCAR','NÃÃÃÃO!');
-  else if(!P.dead&&P.sayT)speech(Math.round(P.x+P.w/2-cx),Math.round(P.y)-6,P.sayT-1,'','AÇÚCAR NÃO!',1,1,5,2,BFONT7); // fonte 5x7 menor, num balão do tamanho de antes
+  else if(!P.dead&&P.sayT)speech(Math.round(P.x+P.w/2-cx),Math.round(P.y)-6,P.sayT-1,'','AÇÚCAR NÃO!',1,1,5,2,BFONT7B); // fonte 5x7 menor, num balão do tamanho de antes
 }
 // balão: ax = x do Guido na tela, baseY = onde fica a base do balão (o rabinho aponta para baixo)
 function speech(ax,baseY,t,L1,L2,k1=2,k2=3,pad=8,bk=k2,F2=BFONT){ // bk = tamanho de letra usado para medir o balão
@@ -962,7 +963,8 @@ function drawHUD(){
   rr(x,y,W,H,'#1d1d1b');rr(x+u,y+u,W-2*u,H-2*u,hudLost>0&&(hudLost>>2)%2?'#c8321e':'#4f86c6');
   ctx.fillStyle='#2f5f9e';ctx.fillRect(x+u*2,y+H-u*2,W-u*4,u);
   const s=hudPop>0?[0,2,4,4,3,2,1,0][8-hudPop]:0;
-  ctx.drawImage(BEAN2,x+8-s/2,y+4-s/2,20+s,20+s);
+  const bs=16+s; // grão do contador: 20% menor que o sprite (20 → 16), centrado no mesmo espaço
+  ctx.drawImage(BEAN2,Math.round(x+8+10-bs/2),Math.round(y+14-bs/2),bs,bs);
   btext(txt,x+8+20+5,y+10,k,'#1d1d1b');btext(txt,x+8+20+4,y+9,k,'#ffffff');
   if(hudPop>0)hudPop--;if(hudLost>0)hudLost--;
 }
@@ -1004,11 +1006,11 @@ const TUT_STEPS=[
 function startTut(){tut={i:-1,dist:0,jumps:0,j0:0,okT:0};nextTut()}
 function endTut(){tut=null;tutEl.className='';tutEl.innerHTML=''}
 function nextTut(){
-  tut.i++;const s=TUT_STEPS[tut.i],n=TUT_STEPS.length;
+  tut.i++;const s=TUT_STEPS[tut.i];
   tut.j0=tut.jumps;tut.okT=0;
   if(!s){tutEl.innerHTML='<div class="tt">PRONTO!</div><div class="tx">Pegue os grãos de café e chegue à cafeteria!</div>';
     tutEl.className='on';tut.endT=150;return}
-  tutEl.innerHTML=`<div class="st">TUTORIAL ${tut.i+1}/${n}</div><div class="tt">${s.t}</div>`+
+  tutEl.innerHTML=`<div class="tt">${s.t}</div>`+
     `<div class="demo ${s.id}"><i></i></div><div class="tx">${s.tx}</div>`;
   tutEl.className='on';
 }
