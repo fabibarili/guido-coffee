@@ -38,7 +38,7 @@ body{display:flex;align-items:center;justify-content:center;height:100vh;height:
 .sign::before,.sign::after{content:'';position:absolute;bottom:calc(100% - var(--p));width:calc(var(--p)*2);height:60vh;
   background:repeating-linear-gradient(to top,#cfd6e2 0 calc(var(--p)*2),#7d8798 0 calc(var(--p)*3),#1d1d1b 0 calc(var(--p)*4))}
 .sign::before{left:calc(var(--p)*11)}.sign::after{right:calc(var(--p)*11)}
-#overlay.menu{background:rgba(0,0,0,.95)}
+#overlay.menu{background:#000}
 /* tela de parabéns: sem fundo, para ver o Guido tomando café na porta da cafeteria */
 #overlay.win{justify-content:center;background:none;pointer-events:none} /* bottom é ajustado no JS: termina no topo da cafeteria */
 #overlay.win .title{font-size:clamp(24px,8vw,34px)}
