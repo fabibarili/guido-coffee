@@ -405,9 +405,6 @@ const BEAN=smallSprite([
 ".bbbdbb.",
 "..bbbb.."],{k:'#2a160a',b:'#7b4a2a',d:'#3f2414',h:'#b88356'})[0];
 const BEAN2=epx(BEAN); // grão coletável (20x20)
-// grão queimando: escurece até virar carvão (o contorno some junto)
-const BEAN_BURN=[0,0.4,0.7,0.9].map(a=>{const cv=newCv(20,20),x=cv.getContext('2d');x.drawImage(BEAN2,0,0);
-  x.globalCompositeOperation='source-atop';x.fillStyle=`rgba(18,12,10,${a})`;x.fillRect(0,0,20,20);return cv});
 
 /* ================= TILES ================= */
 function rng(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
@@ -511,7 +508,7 @@ function buildLevel(){
   en.push(boilEnemy(197*T,5*37));
   // 8 — escada final e chegada
   ground(198,LW-1);sugar(204);for(let i=0;i<8;i++)col(208+i,i+1);beanRow(217,219,10);
-  L={t,w:LW};enemies=en;beans=bn;crumble.clear();falling=[];burnt.length=0;
+  L={t,w:LW};enemies=en;beans=bn;crumble.clear();falling=[];
 }
 const tileAt=(tx,ty)=>(ty<0||ty>=ROWS||tx<0||tx>=LW)?'.':L.t[ty][tx];
 function solidAt(tx,ty){if(tx<0||tx>=LW)return true;const ch=tileAt(tx,ty);return ch==='#'||ch==='C'||ch==='S'||ch==='?'||ch==='X'}
@@ -569,7 +566,6 @@ function sfx(type){
       const n=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();
       f.type=type==='crack'?'bandpass':'highpass';f.frequency.value=type==='crack'?1100:3500;g.gain.value=type==='crack'?0.4:0.18;
       n.buffer=buf;n.connect(f);f.connect(g);g.connect(actx.destination);n.start(t0)}
-    else if(type==='yelp')tone(900,520,0.13,0,'square',0.06); // "ai!"
     else if(type==='woof'){tone(220,140,0.09,0,'sawtooth',0.06);tone(240,150,0.1,0.14,'sawtooth',0.06)}
   }catch(e){}
 }
@@ -609,36 +605,10 @@ function updateLost(){
   lost=lost.filter(b=>b.life>0);
 }
 // caiu no café com açúcar: afunda devagar e aparece o balão
-function coffeeDie(){if(P.dead)return;P.dead=true;P.coffee=true;P.vx=0;P.vy=0.5;deadT=0;P.bx=P.x+P.w/2;sfx('splash');
-  const sx=P.x+P.w/2;for(let i=0;i<14;i++)particles.push({x:sx+(Math.random()-.5)*14,y:COFFEE_Y,vx:(Math.random()-.5)*2.4,vy:-1.5-Math.random()*2.5,life:24+Math.random()*12,col:i%4===0?'#ffffff':(i%2?'#6b3d1e':'#a8673a'),s:2})}
-/* ---- caiu na água fervendo: sai pulando ("ai ai ai") até a margem mais perto, os grãos queimam e aí vem a frase ---- */
-const HOP_V=8.5,HOP_G=0.45,HOP_AIR=2*HOP_V/HOP_G,BURN_END=75;
-function hotSplash(){sfx('sizzle');sfx('yelp');const sx=P.x+P.w/2;
-  for(let i=0;i<10;i++)particles.push({x:sx+(Math.random()-.5)*14,y:COFFEE_Y,vx:(Math.random()-.5)*2.4,vy:-1.5-Math.random()*2.5,life:22,col:i%3?'#a9e2fb':'#ffffff',s:2})}
-function hop(){P.vy=-HOP_V;P.vx=Math.max(-3,Math.min(3,(P.tx-P.x)/HOP_AIR));P.face=P.vx<0?-1:1;hotSplash()}
-function hotDie(){if(P.dead)return;P.dead=true;P.hot=true;P.landed=false;deadT=0;P.inv=0;P.sayT=0;
-  const left=WATER_A*T-P.w-8,right=(WATER_B+1)*T+8;P.tx=P.x-left<right-P.x?left:right; // margem mais perto
-  P.y=COFFEE_Y+4-P.h;hop()}
-const burnt=[];
-function burnBeans(){ // todos os grãos que o Guido carregava saltam para fora e queimam
-  const n=Math.min(beanCount,16),cx=P.x+P.w/2;
-  for(let i=0;i<n;i++){const a=Math.PI*(0.2+0.6*(n>1?i/(n-1):0.5));
-    burnt.push({x:cx-10,y:P.y+8,vx:-Math.cos(a)*3.4,vy:-Math.sin(a)*3.2-1.2,t:-i})}
-  if(n)sfx('sizzle');else P.burnT=BURN_END-15; // sem grãos: vai direto para a frase
-  beanCount=0;fly=[];pops=[];lost=[]}
-function updateHot(){
-  if(!P.landed){P.vy=Math.min(P.vy+HOP_G,9);P.x+=P.vx;P.y+=P.vy;
-    if(deadT%3===0)particles.push({x:P.x+Math.random()*P.w,y:P.y+Math.random()*P.h,vx:0,vy:-0.8,life:16,col:'#ffffff',s:2}); // fumacinha
-    const l=Math.floor(P.x/T),r=Math.floor((P.x+P.w-0.01)/T);
-    if(P.vy>0&&(solidAt(l,13)||solidAt(r,13))&&P.y+P.h>=13*T){P.y=13*T-P.h;P.vx=P.vy=0;P.landed=true;P.burnT=0;dust(P.x+P.w/2,P.y+P.h,5);burnBeans()}
-    else if(P.vy>0&&P.y+P.h>=COFFEE_Y+4){P.y=COFFEE_Y+4-P.h;hop()}}
-  else if(++P.burnT>BURN_END+170)newGame(); // sem fim de jogo: volta para o começo
-}
-function updateBurnt(){
-  for(const b of burnt){b.t++;if(b.t<0)continue;b.vy+=0.14;b.vx*=0.97;b.x+=b.vx;b.y+=b.vy;
-    if(b.t>8&&b.t<50&&b.t%4===0)particles.push({x:b.x+4+Math.random()*12,y:b.y+4+Math.random()*10,vx:(Math.random()-.5)*0.6,vy:-0.6-Math.random()*0.6,life:14,col:Math.random()<.5?'#ff8a2a':'#ffd23a',s:1}); // brasinhas
-    if(b.t===60){for(let i=0;i<6;i++)particles.push({x:b.x+10,y:b.y+10,vx:(Math.random()-.5)*1.2,vy:-0.4-Math.random()*0.8,life:26,col:i%2?'#6b6b6b':'#3a3a3a',s:2})}}
-  for(let i=burnt.length-1;i>=0;i--)if(burnt[i].t>=60)burnt.splice(i,1)}
+function coffeeDie(){if(P.dead)return;P.dead=true;P.coffee=true;P.vx=0;P.vy=0.5;deadT=0;P.bx=P.x+P.w/2;
+  P.water=isWater(Math.floor(P.bx/T));sfx('splash');if(P.water)sfx('sizzle'); // poço de água fervendo
+  const sx=P.x+P.w/2;for(let i=0;i<14;i++)particles.push({x:sx+(Math.random()-.5)*14,y:COFFEE_Y,vx:(Math.random()-.5)*2.4,vy:-1.5-Math.random()*2.5,life:24+Math.random()*12,
+    col:i%4===0?'#ffffff':P.water?(i%2?'#4fb3e6':'#a9e2fb'):(i%2?'#6b3d1e':'#a8673a'),s:2})}
 /* ---- biscoitos que desmancham ---- */
 function startCrumble(tx,ty){ // pisou: o biscoito inteiro (todos os pedaços vizinhos) começa a tremer
   if(crumble.has(ty*1000+tx))return;sfx('crack');
@@ -669,14 +639,13 @@ function update(){
   if(state==='title'){P.still++;return}
   if(state==='play')updatePlayer();
   else if(state==='win')updateWin();
-  if(state==='play'||state==='win'){if(!tut)updateEnemies();updateLost();updateCrumble();updateBurnt()}
+  if(state==='play'||state==='win'){if(!tut)updateEnemies();updateLost();updateCrumble()}
   if(tut&&state==='play')tutTick();
   const target=Math.max(0,Math.min(LW*T-VW,P.x+P.w/2-VW*0.36));
   cam+=(target-cam)*0.18;
 }
 function updatePlayer(){
   if(P.dead){deadT++;
-    if(P.hot){updateHot();return}
     if(P.coffee){P.y+=P.vy;if(deadT%9===0&&deadT<90)particles.push({x:P.bx+(Math.random()-.5)*10,y:COFFEE_Y-1,vx:0,vy:-0.6,life:14,col:'#f3e2c0',s:2})}
     else{P.vy+=0.35;P.y+=P.vy}
     if(deadT>(P.coffee?170:110))newGame();return} // sem fim de jogo: volta para o começo
@@ -705,7 +674,7 @@ function updatePlayer(){
   if(hit)bumpTile(hit.x,hit.y);
   if(P.onGround){const ty=Math.floor((P.y+P.h)/T); // pisou num biscoito: ele começa a desmanchar
     for(let tx=Math.floor(P.x/T);tx<=Math.floor((P.x+P.w-0.01)/T);tx++)if(tileAt(tx,ty)==='F')startCrumble(tx,ty)}
-  if(P.y+P.h>COFFEE_Y+6){if(isWater(Math.floor((P.x+P.w/2)/T)))hotDie();else coffeeDie()}
+  if(P.y+P.h>COFFEE_Y+6)coffeeDie();
   for(const b of beans)if(!b.got&&P.x<b.x+20&&P.x+P.w>b.x&&P.y<b.y+20&&P.y+P.h>b.y){b.got=true;getBean();sparkle(b.x+10,b.y+10);flyBean(b.x,b.y)}
   if(checkpoint<CHECK_X&&P.x>CHECK_X*T){checkpoint=CHECK_X;sfx('up')}
   if(checkpoint>=CHECK_X&&checkK<1)checkK=Math.min(1,checkK+0.04); // bandeira do checkpoint sobe
@@ -1001,10 +970,6 @@ function drawBeans(cx){
     const w=Math.max(2,Math.round(Math.abs(Math.cos(frame/14+b.x*0.05))*20/2)*2);const y=b.y+Math.round(Math.sin(frame/12+b.x)*2);
     ctx.drawImage(BEAN2,Math.round(x+10-w/2),y,w,20)}
   for(const p of pops)ctx.drawImage(BEAN2,Math.round(p.x-cx),Math.round(p.y));
-  for(const b of burnt){if(b.t<0)continue; // grãos queimando: escurecem, soltam brasa e encolhem antes de virar fumaça
-    const st=Math.min(3,Math.floor(b.t/14)),sz=b.t>46?Math.max(4,20-(b.t-46)*1.2):20,x=Math.round(b.x-cx+10-sz/2),y=Math.round(b.y+10-sz/2);
-    ctx.drawImage(BEAN_BURN[st],x,y,sz,sz);
-    if(st>=1&&st<3&&(frame>>2)%2){ctx.fillStyle='#ff8a2a';ctx.fillRect(x+5,y+6,2,2);ctx.fillRect(x+12,y+11,2,2);ctx.fillStyle='#ffd23a';ctx.fillRect(x+9,y+4,1,1)}}
   for(const b of lost){if(b.life<60&&(b.life>>2)%2)continue; // pisca antes de sumir
     const w=Math.max(2,Math.round(Math.abs(Math.cos(frame/6+b.x*0.1))*16/2)*2);
     ctx.drawImage(BEAN2,Math.round(b.x-cx+8-w/2),Math.round(b.y),w,16)}
@@ -1024,7 +989,6 @@ function drawEnemies(cx){
   }
 }
 function dogFrame(){
-  if(P.dead&&P.hot)return P.landed?DOG.stand:(P.vy<0?DOG.jump:DOG.fall);
   if(P.dead)return P.coffee?DOG.fall:DOG.jump;
   if(state==='win'&&winPhase===0)return DOG.jump;
   if(!P.onGround&&state!=='title')return P.vy<0?DOG.jump:DOG.fall;
@@ -1047,7 +1011,7 @@ function drawPlayer(cx){
   const fr=dogFrame(),img=fr[P.face>0?0:1];
   if(P.inv>0&&(P.inv>>2)%2)return;
   const x=Math.round(P.x+P.w/2-(P.face>0?DOG_CX:DW-DOG_CX)-cx),y=Math.round(P.y+P.h-DOG_BASE);
-  if(P.dead&&!P.coffee&&!P.hot){ctx.save();ctx.translate(x,y+DH);ctx.scale(1,-1);ctx.drawImage(img,0,0);ctx.restore()}
+  if(P.dead&&!P.coffee){ctx.save();ctx.translate(x,y+DH);ctx.scale(1,-1);ctx.drawImage(img,0,0);ctx.restore()}
   else ctx.drawImage(img,x,y);
 }
 /* ---- café com açúcar nos buracos entre as plataformas ---- */
@@ -1136,8 +1100,7 @@ function btext(s,px,py,k,col,F=BFONT){ // py = topo da letra (acentos ficam 2 li
     x+=(g[0].length+1+(F.bold?1:0))*k}
 }
 function drawBubble(cx){
-  if(P.dead&&P.coffee&&deadT>=6)speech(Math.round(P.bx-cx),COFFEE_Y-44,deadT-6,'CAFÉ COM AÇÚCAR','NÃÃÃÃO!');
-  else if(P.dead&&P.hot&&P.landed&&P.burnT>=BURN_END)speech(Math.round(P.x+P.w/2-cx),Math.round(P.y)-6,P.burnT-BURN_END,'ÁGUA FERVENDO','QUEIMA O CAFÉ');
+  if(P.dead&&P.coffee&&deadT>=6)speech(Math.round(P.bx-cx),COFFEE_Y-44,deadT-6,...(P.water?['ÁGUA FERVENDO','QUEIMA O CAFÉ']:['CAFÉ COM AÇÚCAR','NÃÃÃÃO!']));
   else if(!P.dead&&P.sayT)speech(Math.round(P.x+P.w/2-cx),Math.round(P.y)-6,P.sayT-1,'',P.sayTxt||'AÇÚCAR NÃO!',1,1,5,2,BFONT7B); // fonte 5x7 menor, num balão do tamanho de antes
 }
 // balão: ax = x do Guido na tela, baseY = onde fica a base do balão (o rabinho aponta para baixo)
