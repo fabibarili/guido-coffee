@@ -1100,7 +1100,7 @@ function btext(s,px,py,k,col,F=BFONT){ // py = topo da letra (acentos ficam 2 li
     x+=(g[0].length+1+(F.bold?1:0))*k}
 }
 function drawBubble(cx){
-  if(P.dead&&P.coffee&&deadT>=6)speech(Math.round(P.bx-cx),COFFEE_Y-44,deadT-6,...(P.water?['ÁGUA FERVENDO','AAAAI!']:['CAFÉ COM AÇÚCAR','NÃÃÃÃO!']));
+  if(P.dead&&P.coffee&&deadT>=6)speech(Math.round(P.bx-cx),COFFEE_Y-44,deadT-6,...(P.water?['ÁGUA FERVENDO','QUEIMA O CAFÉ']:['CAFÉ COM AÇÚCAR','NÃÃÃÃO!']));
   else if(!P.dead&&P.sayT)speech(Math.round(P.x+P.w/2-cx),Math.round(P.y)-6,P.sayT-1,'',P.sayTxt||'AÇÚCAR NÃO!',1,1,5,2,BFONT7B); // fonte 5x7 menor, num balão do tamanho de antes
 }
 // balão: ax = x do Guido na tela, baseY = onde fica a base do balão (o rabinho aponta para baixo)
