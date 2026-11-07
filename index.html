@@ -571,6 +571,9 @@ function updateLost(){
   }
   lost=lost.filter(b=>b.life>0);
 }
+// volta para o último save point (bandeira do checkpoint, ou o começo) sem reiniciar a fase
+function respawn(){P=newPlayer(checkpoint);P.inv=60;lost=[];resetInput();
+  cam=Math.max(0,Math.min(LW*T-VW,P.x+P.w/2-VW*0.36));dust(P.x+P.w/2,P.y+P.h,8);sfx('woof')}
 // caiu no café com açúcar: afunda devagar e aparece o balão
 function coffeeDie(){if(P.dead)return;P.dead=true;P.coffee=true;P.vx=0;P.vy=0.5;deadT=0;P.bx=P.x+P.w/2;sfx('splash');
   const sx=P.x+P.w/2;for(let i=0;i<14;i++)particles.push({x:sx+(Math.random()-.5)*14,y:COFFEE_Y,vx:(Math.random()-.5)*2.4,vy:-1.5-Math.random()*2.5,life:24+Math.random()*12,col:i%4===0?'#ffffff':(i%2?'#6b3d1e':'#a8673a'),s:2})}
@@ -595,7 +598,7 @@ function updatePlayer(){
   if(P.dead){deadT++;
     if(P.coffee){P.y+=P.vy;if(deadT%9===0&&deadT<90)particles.push({x:P.bx+(Math.random()-.5)*10,y:COFFEE_Y-1,vx:0,vy:-0.6,life:14,col:'#f3e2c0',s:2})}
     else{P.vy+=0.35;P.y+=P.vy}
-    if(deadT>(P.coffee?170:110))newGame();return} // sem fim de jogo: volta para o começo
+    if(deadT>(P.coffee?170:110)){if(P.coffee)respawn();else newGame()}return} // café: volta para a última bandeira; senão volta para o começo
   if(P.inv>0)P.inv--;
   // começo da fase: sentado tomando café até o jogador usar algum comando
   if(P.sipping){if(input.left||input.right||input.jump||input.jumpPressed)P.sipping=false;else P.sipT++}
